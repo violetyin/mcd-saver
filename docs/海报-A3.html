@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<title>麦门省钱助手 · 海报 A3</title>
+<style>
+  @page { size: A3 portrait; margin: 0; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 297mm; height: 420mm; }
+  body {
+    background: #ffffff; color: #111114;
+    font-family: "PingFang SC", "Microsoft YaHei", "Source Han Sans SC", -apple-system, sans-serif;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  .page {
+    width: 297mm; height: 420mm; padding: 22mm 20mm 16mm;
+    display: flex; flex-direction: column;
+  }
+
+  .top { display: flex; justify-content: space-between; align-items: center; font-size: 10pt; color: #8a8a90; letter-spacing: .06em; }
+  .top .dot { color: #da291c; }
+
+  h1 { font-size: 62pt; font-weight: 700; letter-spacing: -0.03em; line-height: 1.02; margin-top: 14mm; }
+  h1 em { color: #da291c; font-style: normal; }
+  .sub { font-size: 20pt; color: #3a3a40; margin-top: 7mm; line-height: 1.45; }
+  .sub b { border-bottom: 3px solid #f6d5d1; padding-bottom: 1mm; }
+
+  .numbers { display: flex; gap: 8mm; margin-top: 13mm; }
+  .num { flex: 1; border-top: 2.5pt solid #111114; padding-top: 6mm; }
+  .num .v { font-size: 40pt; font-weight: 700; letter-spacing: -0.03em; line-height: 1; }
+  .num .v small { font-size: 18pt; font-weight: 600; }
+  .num .k { font-size: 11pt; color: #6e6e73; margin-top: 3.5mm; line-height: 1.5; }
+
+  .mid { margin-top: 14mm; display: flex; gap: 12mm; align-items: flex-start; }
+  .flow { flex: 1.15; }
+  .flow .step { display: flex; align-items: baseline; gap: 4mm; padding: 3.2mm 0; border-bottom: 0.6pt solid #e8e8ea; }
+  .flow .step:last-child { border-bottom: 0; }
+  .flow .i { font-size: 9pt; color: #b0b0b6; width: 7mm; flex: none; font-variant-numeric: tabular-nums; }
+  .flow .t { font-size: 12pt; font-weight: 600; }
+  .flow .d { font-size: 9.5pt; color: #6e6e73; margin-left: auto; text-align: right; }
+
+  .quote { flex: 1; background: #fafafa; border-left: 3pt solid #da291c; padding: 8mm 8mm 8mm 8mm; }
+  .quote p { font-size: 12.5pt; line-height: 1.75; color: #2a2a30; }
+  .quote .cap { font-size: 9.5pt; color: #8a8a90; margin-top: 6mm; }
+
+  .shot { margin-top: 12mm; border: 0.8pt solid #e8e8ea; border-radius: 3mm; padding: 7mm 8mm; }
+  .shot .row { display: flex; justify-content: space-between; align-items: baseline; padding: 2.4mm 0; font-size: 11pt; }
+  .shot .row + .row { border-top: 0.5pt dashed #e8e8ea; }
+  .shot .row span { color: #6e6e73; }
+  .shot .row b { font-weight: 600; font-variant-numeric: tabular-nums; }
+  .shot .win { color: #0f7b4f; font-size: 9.5pt; font-weight: 500; }
+  .shot .head { font-size: 9.5pt; color: #8a8a90; margin-bottom: 2mm; }
+
+  .caveats { margin-top: 11mm; display: flex; gap: 7mm; }
+  .cav { flex: 1; border-top: 0.8pt solid #e8e8ea; padding-top: 5mm; }
+  .cav .n { font-size: 9pt; color: #da291c; font-weight: 600; letter-spacing: .04em; }
+  .cav .h { font-size: 12pt; font-weight: 600; margin-top: 2.5mm; line-height: 1.4; }
+  .cav .p { font-size: 9.5pt; color: #6e6e73; margin-top: 2.5mm; line-height: 1.6; }
+
+  .foot { margin-top: auto; padding-top: 8mm; border-top: 2.5pt solid #111114; display: flex; justify-content: space-between; align-items: flex-end; }
+  .foot .repo { font-size: 13pt; font-weight: 600; letter-spacing: -0.01em; }
+  .foot .repo small { display: block; font-size: 9.5pt; font-weight: 400; color: #8a8a90; margin-top: 1.5mm; letter-spacing: 0; }
+  .foot .logos { text-align: right; font-size: 9.5pt; color: #6e6e73; line-height: 1.7; }
+  .badge {
+    display: inline-block; font-size: 9pt; border: 0.8pt solid #da291c; color: #da291c;
+    border-radius: 999px; padding: 1.2mm 4mm; margin-bottom: 3mm;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="top">
+    <div>1024 超能 Coding 周末 <span class="dot">·</span> 用餐赛道</div>
+    <div>WorkBuddy × 麦当劳 MCP</div>
+  </div>
+
+  <h1>麦门<em>省钱</em>助手</h1>
+  <div class="sub">两个人一百块，麦当劳怎么点<br /><b>比一样样单点少花一半</b></div>
+
+  <div class="numbers">
+    <div class="num">
+      <div class="v">48<small>%</small></div>
+      <div class="k">同样一顿，省下的比例</div>
+    </div>
+    <div class="num">
+      <div class="v">¥25.2</div>
+      <div class="k">两人餐比分开单点少付</div>
+    </div>
+    <div class="num">
+      <div class="v">¥23.1</div>
+      <div class="k">一张券自己省下的</div>
+    </div>
+  </div>
+
+  <div class="mid">
+    <div class="flow">
+      <div class="step"><span class="i">01</span><span class="t">说清需求</span><span class="d">人数 · 预算 · 忌口</span></div>
+      <div class="step"><span class="i">02</span><span class="t">先定门店</span><span class="d">query-nearby-stores</span></div>
+      <div class="step"><span class="i">03</span><span class="t">拉菜单和券</span><span class="d">query-meals / coupons</span></div>
+      <div class="step"><span class="i">04</span><span class="t">逐个组合算价</span><span class="d">calculate-price</span></div>
+      <div class="step"><span class="i">05</span><span class="t">给出三套方案</span><span class="d">实付 · 省多少 · 热量</span></div>
+    </div>
+
+    <div class="quote">
+      <p>麦当劳的真实应付金额，由「门店 × 当时菜单 × 你手里的券」三者共同决定。<br /><br />所以把标价加起来，永远是错的。</p>
+      <p class="cap">每一分钱都来自价格计算接口的实时返回，不是估算。</p>
+    </div>
+  </div>
+
+  <div class="shot">
+    <div class="head">实测 · 武汉光谷通信广场餐厅 · 2 人 100 元预算</div>
+    <div class="row"><span>精选超值随心配 ×2（含那么大鸡排 + 饮品）</span><b>¥27.80 <span class="win">省 ¥25.20</span></b></div>
+    <div class="row"><span>人气经典随心配 ×2（含双层吉士汉堡 + 饮品）</span><b>¥29.80 <span class="win">省 ¥23.20</span></b></div>
+    <div class="row"><span>麦辣鸡腿堡三件套（用券）</span><b>¥22.90 <span class="win">券省 ¥23.10</span></b></div>
+    <div class="row"><span>对照：一样样分开单点</span><b>¥53.00</b></div>
+  </div>
+
+  <div class="caveats">
+    <div class="cav">
+      <div class="n">01</div>
+      <div class="h">券按门店生效</div>
+      <div class="p">同一个账号，换一家门店能用的券就变了。所以必须先定门店，再谈价格。</div>
+    </div>
+    <div class="cav">
+      <div class="n">02</div>
+      <div class="h">券商品不带券 ID，会算出 0 元</div>
+      <div class="p">不拦掉这个异常返回，排序就会把「0 元」排成最便宜方案。</div>
+    </div>
+    <div class="cav">
+      <div class="n">03</div>
+      <div class="h">金额单位是分</div>
+      <div class="p">接口返回的是分不是元。看着像小事，错一次整张榜单全废。</div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <div class="repo">
+      github.com/violetyin/mcd-saver
+      <small>零依赖 · clone 下来填个 Token 就能跑</small>
+    </div>
+    <div class="logos">
+      <div class="badge">真调用 · 单次 20+ 次 MCP 请求</div>
+      <div>不下单 · 不动你的钱</div>
+      <div>餐品与价格以门店实时结果为准</div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
