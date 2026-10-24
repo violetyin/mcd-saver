@@ -1,6 +1,6 @@
 ---
 name: mcd-saver
-description: 麦门省钱助手。当用户问「麦当劳怎么点最划算 / 两个人一百块吃麦当劳点什么 / 帮我凑一单麦当劳 / 有什么券能用 / 这一单多少钱」时使用。输入人数、预算、忌口和门店，调用麦当劳 MCP 真实取门店、菜单、本店优惠券，逐个计算组合的实付价，输出 3 套方案并说明比单点省多少，可附营养信息。涉及 query-nearby-stores、query-meals、query-store-coupons、calculate-price、query-meal-detail、list-nutrition-foods。
+description: 麦门省钱助手。当用户问「麦当劳怎么点最划算 / 两个人一百块吃麦当劳点什么 / 帮我凑一单麦当劳 / 有什么券能用 / 这一单多少钱」时使用。输入人数、预算、忌口和门店，调用麦当劳 MCP 真实取门店、菜单、本店优惠券，逐个计算组合的实付价，输出 3 套方案；仅对同餐品同份数比较省钱，可附营养信息。涉及 query-nearby-stores、query-meals、query-store-coupons、calculate-price、query-meal-detail、list-nutrition-foods。
 agent_created: true
 ---
 
@@ -64,8 +64,8 @@ node src/cli.mjs --people 2 --budget 100 --avoid 辣 --city 北京 --keyword 国
 
 - **实付**：`calculate-price` 的 `price`，含券。
 - **标价**：同一次返回的 `originalPrice`，是这些东西的原价合计。
-- **比单点省**：跟「每人一份主食+小食+饮品全部分开单点」的基线比，这是**同口径**对比，最能说明省了多少。
-- **人均**：按「这套够几个人吃」摊，不是按订单总价除人数。
+- **比单点省**：仅当推荐方案与单点参考餐的商品及份数完全相同时显示。
+- **人均**：订单总实付除以用户输入的实际用餐人数。
 
 ## 边界（明确不做）
 

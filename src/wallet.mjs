@@ -31,12 +31,17 @@ export function parseMyCoupons(md) {
   return out;
 }
 
-/** 解析「麦麦省可领券」markdown */
+/** 解析「麦麦省可领券」markdown
+ *  只保留真正还能领的：status 必须是「可领取」。
+ *  注意「不可领取」里也含「可领取」三个字，必须整串相等，不能用 includes。
+ */
 export function parseAvailableCoupons(md) {
   if (typeof md !== 'string') return [];
   const titles = [...md.matchAll(/优惠券标题[:：]\s*([^\n\\]+)/g)].map((m) => m[1].trim());
   const status = [...md.matchAll(/状态[:：]\s*([^\n\\]+)/g)].map((m) => m[1].trim());
-  return titles.map((t, i) => ({ title: t, status: status[i] || '' })).filter((x) => x.title);
+  return titles
+    .map((t, i) => ({ title: t, status: (status[i] || '').trim() }))
+    .filter((x) => x.title && x.status === '可领取');
 }
 
 /** 解析「我的积分」 */

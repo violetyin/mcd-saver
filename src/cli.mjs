@@ -110,7 +110,7 @@ try {
     console.log(`🧾 你的历史：${h.count} 笔订单，单均 ¥${h.avgAmount}${h.last ? `｜最近一单：${h.last.desc}` : ''}`);
   }
   if (r.baseline) {
-    console.log(`📊 单点基线（${r.baseline.label}）：¥${yuan(r.baseline.price)}，人均 ¥${r.baseline.perPerson.toFixed(2)}`);
+    console.log(`📊 参考点法（${r.baseline.label}）：¥${yuan(r.baseline.price)}，人均 ¥${r.baseline.perPerson.toFixed(2)}；餐品不同不比较省钱`);
   }
   console.log(line);
 
@@ -139,14 +139,24 @@ try {
     if (saved > 0) money += `，券省 ¥${yuan(saved)}（${pct}%）`;
     money += `，人均 ¥${p.perPerson.toFixed(2)}`;
     console.log(money);
-    if (p.savedVsBaseline != null) {
+    if (p.savedVsBaseline != null && p.savedVsBaseline !== 0) {
       const d = p.savedVsBaseline;
       console.log(d > 0
-        ? `   ── 比一样样单点少花 ¥${yuan(d)}（${Math.round((d / r.baseline.price) * 100)}%）`
-        : `   ── 比单点基线贵 ¥${yuan(-d)}`);
+        ? `   ── 与参考餐同餐品，少花 ¥${yuan(d)}`
+        : `   ── 与参考餐同餐品，多花 ¥${yuan(-d)}`);
     }
     if (p.content) console.log(`   · 套餐默认含：${p.content.items.join(' + ')}`);
-    if (p.nutrition) console.log(`   · 约 ${p.nutrition.kcal} 大卡 / 蛋白质 ${p.nutrition.protein}g / 脂肪 ${p.nutrition.fat}g（按餐品名匹配）`);
+    if (p.sameItems) {
+      const s = p.sameItems;
+      console.log(s.saved > 0
+        ? `   ── 同样这些吃的分开单点 ¥${yuan(s.price)}，套餐省 ¥${yuan(s.saved)}（${s.pct}%）`
+        : `   ── 同样这些吃的分开单点 ¥${yuan(s.price)}（套餐没有更便宜）`);
+    }
+    if (p.nutrition) {
+      const n = p.nutrition;
+      const cov = n.complete ? '' : `（${n.total} 项中 ${n.matched} 项可查，未含 ${n.missing.join('、')}）`;
+      console.log(`   · 约 ${n.kcal} 大卡 / 蛋白质 ${n.protein}g / 脂肪 ${n.fat}g${cov}`);
+    }
     console.log(`   · ${p.note}`);
   });
 

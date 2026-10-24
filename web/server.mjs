@@ -90,7 +90,7 @@ const server = http.createServer(async (req, res) => {
         try {
           const cr = await client.call('query-store-coupons', { storeCode: String(b.storeCode), orderType: 1, beType: 1 });
           storeCoupons = Array.isArray(cr?.data) ? cr.data : [];
-        } catch { /* 单店券失败不影响账户盘点 */ }
+        } catch (e) { w.errors.push(`query-store-coupons: ${String(e.message).slice(0, 60)}`); }
       }
       json(200, { ...w, storeCoupons, calls: client.calls });
     } catch (e) { json(500, { error: e.message }); }
@@ -103,9 +103,14 @@ const server = http.createServer(async (req, res) => {
       const client = makeClient();
       await client.init();
       const before = await walletSnapshot(client);
+      if (!before.claimable.length) {
+        json(200, { skipped: true, reason: '没有可领取的券（可能已经领过了）', before: before.mine.length, after: before.mine.length, wallet: before, calls: client.calls });
+        return;
+      }
       const claimRes = await client.call('auto-bind-coupons', {});
       const after = await walletSnapshot(client);
       json(200, {
+        skipped: false,
         claimed: Math.max(0, after.mine.length - before.mine.length),
         before: before.mine.length,
         after: after.mine.length,

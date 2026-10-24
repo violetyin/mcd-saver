@@ -175,7 +175,7 @@
     </div>
     <div class="field">
       <label>加分项</label>
-      <label class="check"><input type="checkbox" id="nutri" /> 顺便看热量</label>
+      <label class="check"><input type="checkbox" id="nutri" checked /> 顺便看热量</label>
     </div>
     <button class="go" id="go">算一算怎么点最划算</button>
     <div class="tiny" style="margin-top:9px">推荐和比价不需要你确认；下单会先弹确认，且默认不付款。</div>
@@ -251,6 +251,11 @@ function selectStore(store, el) {
   $('formCard').classList.remove('dim');
   $('result').innerHTML = '';
   loadWallet();
+  // 演示模式：等门店选好、账户刷出来，再自动算一次
+  if (demoPending) {
+    demoPending = false;
+    setTimeout(() => $('go').click(), 1500);
+  }
 }
 
 $('doSearch').onclick = searchStores;
@@ -274,11 +279,14 @@ function renderWallet(w) {
   const mine = w.mine || [];
   const claimable = w.claimable || [];
   const usable = w.storeCoupons || [];
+  const errors = w.errors || [];
+  const storeCouponError = errors.some((e) => e.startsWith('query-store-coupons:'));
+  const claimableError = errors.some((e) => e.startsWith('available-coupons:'));
 
   const html = `
     <div class="metrics">
-      <div class="m"><div class="k">这家店能用</div><div class="v">${usable.length}<small>张券</small></div></div>
-      <div class="m"><div class="k">还能领</div><div class="v">${claimable.length}<small>张</small></div></div>
+      <div class="m"><div class="k">这家店能用</div><div class="v">${storeCouponError ? '—' : usable.length}<small>张券</small></div></div>
+      <div class="m"><div class="k">还能领</div><div class="v">${claimableError ? '—' : claimable.length}<small>张</small></div></div>
       <div class="m ${acc.expired > 0 ? 'warn' : ''}">
         <div class="k">积分已过期</div>
         <div class="v">${acc.expired != null ? Math.round(acc.expired) : '—'}<small>分</small></div>
@@ -287,7 +295,7 @@ function renderWallet(w) {
 
     ${usable.length ? `<div class="list">${usable.map((c) => `
       <div class="item"><span class="nm">${c.title}</span><span class="tg">本店可用</span></div>`).join('')}</div>`
-      : `<div class="meta">这家店暂时没有你能用的券${mine.length ? `（你账户里有 ${mine.length} 张，但都不适用于这家店）` : ''}。</div>`}
+      : `<div class="meta">${storeCouponError ? '本店券暂时查不到，请刷新重试。' : `这家店暂时没有你能用的券${mine.length ? `（你账户里有 ${mine.length} 张，但都不适用于这家店）` : ''}。`}</div>`}
 
     ${claimable.length ? `
       <div class="claim">
@@ -297,7 +305,7 @@ function renderWallet(w) {
           <button class="btn primary" id="doClaim">一键领取</button>
           <span class="tiny">会真实写入你的麦当劳账户</span>
         </div>
-      </div>` : '<div class="meta" style="margin-top:12px">麦麦省的券都已经领完了。</div>'}
+       </div>` : `<div class="meta" style="margin-top:12px">${claimableError ? '可领券暂时查不到，请刷新重试。' : '麦麦省的券都已经领完了。'}</div>`}
 
     ${acc.expiringThisMonth > 0 ? `<div class="meta">这个月还有 ${acc.expiringThisMonth} 积分要过期。</div>` : ''}
     <div class="foot" style="border:0;padding:0;margin-top:12px">读取账户 + 本店券用了 ${w.calls || '—'} 次 MCP 调用</div>
@@ -311,16 +319,20 @@ function renderWallet(w) {
     btn.innerHTML = '<span class="spin"></span>领取中…';
     try {
       const d = await post('/api/claim', {});
-      renderWallet({ ...d.wallet, storeCoupons: usable, calls: d.calls });
+      const refreshed = await post('/api/wallet', { storeCode: selectedStore.storeCode });
+      renderWallet(refreshed);
       const tip = document.createElement('div');
       tip.className = 'meta';
-      tip.style.color = '#0f7b4f';
-      tip.textContent = `已领取，手里从 ${d.before} 张变成 ${d.after} 张。现在再算这一单，能用的券更多了。`;
+      if (d.skipped) {
+        tip.textContent = d.reason || '没有可领取的券';
+      } else {
+        tip.style.color = '#0f7b4f';
+        tip.textContent = `已领取，手里从 ${d.before} 张变成 ${d.after} 张。本店可用券已刷新，请再算一次查看价格是否变化。`;
+      }
       $('wallet').prepend(tip);
     } catch (e) {
-      btn.disabled = false;
-      btn.textContent = '重试';
-      alert('领取失败：' + e.message);
+      btn.textContent = '请刷新账户';
+      $('wallet').insertAdjacentHTML('afterbegin', `<div class="err">领取结果暂未确认：${e.message}。请点右上角“刷新”核对券数，避免重复领取。</div>`);
     }
   };
 }
@@ -363,8 +375,9 @@ function renderPlans(d) {
         <small>门店 ${d.store.storeCode}${d.store.distance != null ? ' · ' + d.store.distance + 'm' : ''} · 到店自取</small>
       </div>
       ${d.coupons.length ? `<div class="claim" style="background:#eaf5ef;border-color:#cfe7db"><p style="margin:0">这一单能用 ${d.coupons.length} 张券：<b>${d.coupons.map((c) => c.title).join('、')}</b></p></div>` : ''}
+      ${d.couponLookupFailed ? '<div class="err">本店券查询失败，本次只计算无券方案。请刷新后重试。</div>' : ''}
       ${h ? `<div class="base">你过去 ${h.count} 笔订单，单均 <b>¥${h.avgAmount}</b>${h.last ? '　最近一单：' + h.last.desc : ''}</div>` : ''}
-      ${d.baseline ? `<div class="base">一样样分开单点要 <b>¥${yuan(d.baseline.price)}</b>（${d.baseline.label}）—— 下面这些都比它便宜</div>` : ''}
+      ${d.baseline ? `<div class="base">参考点法：<b>¥${yuan(d.baseline.price)}</b>（${d.baseline.label}）。餐品不同时不计算“省了多少”。</div>` : ''}
     </section>`;
 
   const plans = d.plans.map((p, i) => {
@@ -381,11 +394,14 @@ function renderPlans(d) {
       <div class="row2">
         <span class="price">¥${yuan(p.price)}</span>
         <span class="per">人均 ¥${p.perPerson.toFixed(2)}</span>
-        ${sv > 0 ? `<span class="save">比单点省 ¥${yuan(sv)}</span>` : ''}
+        ${sv > 0 ? `<span class="save">同餐品比单点省 ¥${yuan(sv)}</span>` : ''}
+        ${p.sameItems && p.sameItems.saved > 0 ? `<span class="save">套餐比分着买省 ¥${yuan(p.sameItems.saved)}（${p.sameItems.pct}%）</span>` : ''}
+        ${p.original > p.price ? `<span class="save">本单优惠 ¥${yuan(p.original - p.price)}</span>` : ''}
       </div>
       ${body}
       ${p.content ? `<div class="meta">套餐默认含：${p.content.items.join(' + ')}</div>` : ''}
-      ${p.nutrition ? `<div class="meta">约 ${p.nutrition.kcal} 大卡 · 蛋白质 ${p.nutrition.protein}g · 脂肪 ${p.nutrition.fat}g</div>` : ''}
+      ${p.sameItems ? `<div class="meta">同样这些吃的分开单点要 ¥${yuan(p.sameItems.price)}${p.sameItems.saved > 0 ? `，这单便宜 ¥${yuan(p.sameItems.saved)}` : ''}</div>` : ''}
+      ${p.nutrition ? `<div class="meta">约 ${p.nutrition.kcal} 大卡 · 蛋白质 ${p.nutrition.protein}g · 脂肪 ${p.nutrition.fat}g${p.nutrition.complete ? '' : `（${p.nutrition.total} 项中 ${p.nutrition.matched} 项可查，未含 ${p.nutrition.missing.join('、')}）`}</div>` : ''}
       <div class="meta">${p.note}</div>
       <div class="orderbar">
         <button class="btn primary" data-order="${i}">${p.ordersDetail ? `按这个方案下 ${p.ordersDetail.length} 笔订单` : '就按这个来下单'}</button>
@@ -502,6 +518,8 @@ function renderOrderResult(idx, orders) {
   };
 }
 
+// 演示模式：加 ?demo=1 打开页面，等门店与账户加载完自动算一次
+let demoPending = !!new URLSearchParams(location.search).get('demo');
 searchStores();
 </script>
 </body>

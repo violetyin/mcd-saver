@@ -1,7 +1,8 @@
 // 麦门省钱助手 · 决策引擎
 // 核心原则：一切金额以 calculate-price 返回值为准（单位：分），绝不用标价相加。
 import { McpClient, loadEnv } from './mcp.mjs';
-import { parseToon, matchNutrition } from './toon.mjs';
+import { parseToon } from './toon.mjs';
+import { perPerson, sameBasket, nutritionForComponents } from './recommendation.mjs';
 import { walletSnapshot } from './wallet.mjs';
 import { fetchHistory } from './history.mjs';
 import path from 'node:path';
@@ -197,11 +198,11 @@ function buildSplitCandidates({ people, buckets, coupons, filter }) {
 export async function runSaver(opts) {
   const env = loadEnv(path.join(ROOT, '.env'));
   const token = opts.token || env.MCD_MCP_TOKEN;
-  if (!token) throw new Error('缺少 MCD_MCP_TOKEN，请复制 .env.example 为 .env 并填入 Token');
+  if (!token && !opts.client) throw new Error('缺少 MCD_MCP_TOKEN，请复制 .env.example 为 .env 并填入 Token');
 
   const people = Math.max(1, Number(opts.people || 1));
   const budgetTotal = opts.budget ? Number(opts.budget) * (opts.budgetPerPerson ? people : 1) : null;
-  const client = new McpClient({ url: MCD_URL, token });
+  const client = opts.client || new McpClient({ url: MCD_URL, token });
   const log = [];
   const step = (msg) => log.push(msg);
 
@@ -263,11 +264,13 @@ export async function runSaver(opts) {
   step(`query-meals → ${Object.keys(menu.meals || {}).length} 个餐品 / ${(menu.categories || []).length} 个类目`);
 
   let coupons = [];
+  let couponLookupFailed = false;
   try {
     const couponRes = await client.call('query-store-coupons', base);
     coupons = Array.isArray(couponRes?.data) ? couponRes.data : [];
     step(`query-store-coupons → ${coupons.length} 张可用券`);
   } catch (e) {
+    couponLookupFailed = true;
     step(`⚠️ query-store-coupons 失败（按无券继续）：${String(e.message).slice(0, 80)}`);
   }
 
@@ -283,8 +286,7 @@ export async function runSaver(opts) {
   const splitCands = buildSplitCandidates({ people, buckets, coupons, filter });
   const allCands = [...cands, ...splitCands];
 
-  // 单点基线：每人「一份主食 + 一份小食 + 一杯饮品」全部分开单点要多少钱
-  // 这是「省钱」的参照物——套餐/券方案比它少付多少，才是真的省
+  // 单点参考餐：仅在商品和份数完全相同时才计算「比单点省」。
   let baseline = null;
   {
     const bMain = (buckets.main || []).filter(filter)[0];
@@ -304,6 +306,7 @@ export async function runSaver(opts) {
             perPerson: Math.round(Number(d.price) / people) / 100,
             label: parts.map((p) => `${p.name}×${people}`).join(' + '),
             items: parts.map((p) => p.name),
+            rawItems: parts.map((p) => ({ code: p.code, quantity: people })),
           };
           step(`单点基线 → ${parts.map((p) => p.name).join(' + ')} = ¥${yuan(baseline.price)}`);
         }
@@ -352,8 +355,8 @@ export async function runSaver(opts) {
         if (bad) continue;
         priced.push({
           ...cand, price, original, discount, ordersDetail: detail, rawOrders: cand.orders,
-          perPerson: Math.round(price / Math.max(1, cand.covers)) / 100,
-          savedVsBaseline: baseline ? baseline.price - price : null,
+          perPerson: perPerson(price, people),
+          savedVsBaseline: null,
           rawItems: [],
           items: detail.flatMap((d) => d.items),
         });
@@ -365,8 +368,8 @@ export async function runSaver(opts) {
       if (!Number.isFinite(r.price) || r.price <= 0) continue;
       priced.push({
         ...cand, price: r.price, original: r.original, discount: r.discount,
-        perPerson: Math.round(r.price / Math.max(1, cand.covers)) / 100,
-        savedVsBaseline: baseline ? baseline.price - r.price : null,
+        perPerson: perPerson(r.price, people),
+        savedVsBaseline: baseline && sameBasket(cand.items, baseline.rawItems) ? baseline.price - r.price : null,
         rawItems: cand.items,
         items: r.productList,
       });
@@ -382,37 +385,94 @@ export async function runSaver(opts) {
   inBudget.sort((a, b) => a.perPerson - b.perPerson);
   const top = inBudget.slice(0, 3);
 
-  // 3.5 给前三个方案补「套餐里到底有什么」——默认选中的那几项
+  // 展开前三个方案的每份套餐：拿到「这套里到底有哪些单品」，用于营养和同餐品比价
+  const roleByCode = new Map(Object.entries(buckets).flatMap(([role, list]) => list.map((item) => [item.code, role])));
+  const nameToCode = new Map();
+  for (const [code, m] of Object.entries(menu.meals || {})) {
+    if (m?.name) nameToCode.set(String(m.name).replace(/\s/g, ''), code);
+  }
+  const resolveCode = (name) => {
+    const k = String(name || '').replace(/\s/g, '');
+    if (nameToCode.has(k)) return nameToCode.get(k);
+    const hit = [...nameToCode.entries()].find(([n]) => n.includes(k) || k.includes(n));
+    return hit ? hit[1] : null;
+  };
+
+  const detailCache = new Map();
+  const planComponents = new Map(); // plan -> { list: [{code,name,quantity}], complete }
   for (const plan of top) {
-    if (plan.kind === 'coupon') continue; // 券商品的详情不可靠，不展示构成
-    const first = plan.rawItems.find((it) => menu.meals?.[it.code]) || plan.rawItems[0];
-    if (!first) continue;
-    try {
-      const d = await client.call('query-meal-detail', { ...base, code: first.code });
-      const rounds = d?.data?.rounds || [];
-      if (!rounds.length) continue;
-      const picks2 = [];
-      for (const rd of rounds) {
-        const chosen = (rd.choices || []).filter((c) => Number(c.isDefault) === 1 || c.quantity > 0);
-        for (const c of chosen) picks2.push(c.name);
+    if (plan.kind === 'coupon' || plan.kind === 'split') continue; // 券餐构成未核实，不报热量
+    const components = [];
+    let complete = true;
+    for (const item of plan.rawItems) {
+      const quantity = Number(item.quantity);
+      const role = roleByCode.get(item.code);
+      if (!Number.isFinite(quantity) || quantity <= 0) { complete = false; break; }
+      if (role !== 'single' && role !== 'multi') {
+        const name = menu.meals?.[item.code]?.name;
+        if (!name) { complete = false; break; }
+        components.push({ code: item.code, name, quantity });
+        continue;
       }
-      if (picks2.length) plan.content = { of: d.data.name, items: [...new Set(picks2)] };
-    } catch { /* 明细失败不影响主结果 */ }
+      if (!detailCache.has(item.code)) {
+        try {
+          const d = await client.call('query-meal-detail', { ...base, code: item.code });
+          detailCache.set(item.code, d?.data || null);
+        } catch { detailCache.set(item.code, null); }
+      }
+      const detail = detailCache.get(item.code);
+      const rounds = detail?.rounds || [];
+      if (!rounds.length) { complete = false; break; }
+      // 每一轮是「从这些选项里选 N 个」，不能把 hasDefault 和 quantity>0 的选项同时算进去
+      // 实测：粉区里「怡泉+C麦炫酷」标了默认但 quantity=0，真正选中的是 quantity=1 的「阳光柠檬红茶」
+      const picked = [];
+      let roundOk = true;
+      for (const rd of rounds) {
+        const choices = rd.choices || [];
+        const selected = choices.filter((c) => Number(c.quantity) > 0);
+        const chosen = selected.length
+          ? selected
+          : choices.filter((c) => Number(c.isDefault) === 1).slice(0, Number(rd.quantity) || 1);
+        if (!chosen.length) { roundOk = false; break; }
+        for (const c of chosen) {
+          picked.push({ name: c.name, code: resolveCode(c.name), perSet: Number(c.quantity) > 0 ? Number(c.quantity) : 1 });
+        }
+      }
+      if (!roundOk) { complete = false; break; }
+      const parts = picked.map((p) => ({ name: p.name, code: p.code, quantity: quantity * p.perSet }));
+      components.push(...parts);
+      plan.content = { of: detail.name, items: parts.map((part) => part.name) };
+    }
+    if (components.length) planComponents.set(plan, { list: components, complete });
   }
   step(`query-meal-detail → 已补齐前 ${top.filter((t) => t.content).length} 个方案的套餐构成`);
+
+  // 4.5 同餐品单点价：把套餐里的单品分别买一次，看套餐到底便宜多少。
+  // 这是唯一站得住的「省多少」——商品完全相同，只有打包方式不同。
+  for (const plan of top) {
+    const comp = planComponents.get(plan);
+    if (!comp || !comp.complete) continue;
+    const items = comp.list.filter((c) => c.code && c.quantity > 0).map((c) => ({ code: c.code, quantity: c.quantity }));
+    if (items.length !== comp.list.length) continue; // 有单品在菜单里找不到，不硬算
+    try {
+      const r = await priceItems(items);
+      if (!Number.isFinite(r.price) || r.price <= 0) continue;
+      plan.sameItems = {
+        price: r.price,          // 同样这些吃的、分开单点各一份的总价（分）
+        saved: r.price - plan.price,
+        pct: r.price > 0 ? Math.round(((r.price - plan.price) / r.price) * 100) : 0,
+        items: items.length,
+      };
+    } catch { /* 算不出就不展示，不影响主结果 */ }
+  }
+  step(`同餐品单点价比价 → ${top.filter((t) => t.sameItems).length} 个方案可比`);
 
   // 5. 营养（可选加分项）
   if (nutRes) {
     const rows = parseToon(typeof nutRes?.data === 'string' ? nutRes.data : '');
-    for (const t of priced) {
-      let kcal = 0, fat = 0, protein = 0, matched = 0;
-      // 套餐就按默认构成里的真实餐品算，比按套餐名猜准得多
-      const names = t.content?.items?.length ? t.content.items : t.items.map((i) => i.name);
-      for (const name of names) {
-        const n = matchNutrition(rows, name);
-        if (n?.kcal) { kcal += n.kcal; fat += n.fat || 0; protein += n.protein || 0; matched++; }
-      }
-      t.nutrition = matched ? { kcal: Math.round(kcal), fat: Math.round(fat), protein: Math.round(protein), matched, total: names.length } : null;
+    for (const t of top) {
+      const comp = planComponents.get(t);
+      t.nutrition = nutritionForComponents(rows, comp?.list);
     }
     step(`list-nutrition-foods → 营养表 ${rows.length} 条（TOON 格式已解析）`);
   }
@@ -421,6 +481,7 @@ export async function runSaver(opts) {
     store: { storeCode: String(store.storeCode), storeName: store.storeName, address: store.address, distance: store.distance },
     input: { people, budgetTotal, avoid: opts.avoid || [], city: opts.city, keyword: opts.keyword },
     coupons: coupons.map((c) => ({ title: c.title, couponId: c.couponId, valid: c.tradeDateTime })),
+    couponLookupFailed,
     candidatesTested: allCands.length,
     valid: priced.length,
     baseline,

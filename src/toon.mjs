@@ -34,10 +34,10 @@ export function matchNutrition(rows, name) {
   if (!hit) hit = rows.find((r) => norm(r.productName).includes(target) && target.length >= 3);
   if (!hit) return null;
   return {
-    kcal: hit.energyKcal ? Number(hit.energyKcal) : null,
-    protein: hit.protein ? Number(hit.protein) : null,
-    fat: hit.fat ? Number(hit.fat) : null,
-    carb: hit.carbohydrate ? Number(hit.carbohydrate) : null,
-    sodium: hit.sodium ? Number(hit.sodium) : null,
+    kcal: hit.energyKcal == null ? null : Number(hit.energyKcal),
+    protein: hit.protein == null ? null : Number(hit.protein),
+    fat: hit.fat == null ? null : Number(hit.fat),
+    carb: hit.carbohydrate == null ? null : Number(hit.carbohydrate),
+    sodium: hit.sodium == null ? null : Number(hit.sodium),
   };
 }
