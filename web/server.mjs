@@ -5,6 +5,8 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { runSaver } from '../src/saver.mjs';
+import { walletSnapshot } from '../src/wallet.mjs';
+import { McpClient, loadEnv } from '../src/mcp.mjs';
 
 // 有本地代理时，Node 的 fetch 不读 HTTPS_PROXY，自动重启一次带上开关
 if ((process.env.HTTPS_PROXY || process.env.https_proxy) && !process.env.NODE_USE_ENV_PROXY && !process.env.__MCD_REEXEC) {
@@ -17,6 +19,13 @@ if ((process.env.HTTPS_PROXY || process.env.https_proxy) && !process.env.NODE_US
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const PORT = Number(process.env.PORT || 4173);
+
+/** 每个请求单独建客户端：共享会话在并发时会被服务端掐掉 */
+function makeClient() {
+  const env = loadEnv(path.join(ROOT, '.env'));
+  if (!env.MCD_MCP_TOKEN) throw new Error('缺少 MCD_MCP_TOKEN，请复制 .env.example 为 .env 并填入');
+  return new McpClient({ url: 'https://mcp.mcd.cn', token: env.MCD_MCP_TOKEN });
+}
 
 const MIME = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8' };
 
@@ -31,6 +40,41 @@ function readBody(req) {
 
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, 'http://localhost');
+  const json = (code, obj) => {
+    res.writeHead(code, { 'Content-Type': 'application/json; charset=utf-8' });
+    res.end(JSON.stringify(obj));
+  };
+
+  // 券资产盘点
+  if (url.pathname === '/api/wallet' && req.method === 'POST') {
+    try {
+      const client = makeClient();
+      await client.init();
+      const w = await walletSnapshot(client);
+      json(200, { ...w, calls: client.calls });
+    } catch (e) { json(500, { error: e.message }); }
+    return;
+  }
+
+  // 一键领券（账户写操作，前端必须二次确认）
+  if (url.pathname === '/api/claim' && req.method === 'POST') {
+    try {
+      const client = makeClient();
+      await client.init();
+      const before = await walletSnapshot(client);
+      const claimRes = await client.call('auto-bind-coupons', {});
+      const after = await walletSnapshot(client);
+      json(200, {
+        claimed: Math.max(0, after.mine.length - before.mine.length),
+        before: before.mine.length,
+        after: after.mine.length,
+        raw: typeof claimRes === 'string' ? claimRes.slice(0, 400) : null,
+        wallet: after,
+        calls: client.calls,
+      });
+    } catch (e) { json(500, { error: e.message }); }
+    return;
+  }
 
   if (url.pathname === '/api/plan' && req.method === 'POST') {
     try {
@@ -45,12 +89,8 @@ const server = http.createServer(async (req, res) => {
         storeCode: b.storeCode || undefined,
         nutrition: !!b.nutrition,
       });
-      res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
-      res.end(JSON.stringify(result));
-    } catch (e) {
-      res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
-      res.end(JSON.stringify({ error: e.message }));
-    }
+      json(200, result);
+    } catch (e) { json(500, { error: e.message }); }
     return;
   }
 

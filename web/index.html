@@ -6,8 +6,8 @@
 <title>麦门省钱助手</title>
 <style>
   :root {
-    --ink: #1d1d1f; --muted: #6e6e73; --line: #e5e5e7; --bg: #fafafa;
-    --card: #ffffff; --red: #da291c; --green: #0f7b4f; --yellow: #fff8e6;
+    --ink: #1d1d1f; --muted: #6e6e73; --faint: #a1a1a6; --line: #e6e6e9;
+    --bg: #fafaf9; --card: #fff; --red: #da291c; --green: #0f7b4f; --amber: #fff8e6;
   }
   * { box-sizing: border-box; }
   body {
@@ -15,139 +15,147 @@
     font: 15px/1.65 -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
     -webkit-font-smoothing: antialiased;
   }
-  .wrap { max-width: 860px; margin: 0 auto; padding: 56px 20px 80px; }
-  header h1 { font-size: 30px; font-weight: 600; margin: 0 0 8px; letter-spacing: -0.4px; }
-  header p { margin: 0 0 4px; color: var(--muted); font-size: 14px; }
-  .tag {
-    display: inline-flex; align-items: center; gap: 6px; margin-top: 12px;
-    font-size: 12px; color: var(--red); background: #fff; border: 1px solid var(--line);
-    padding: 4px 10px; border-radius: 999px;
+  .wrap { max-width: 880px; margin: 0 auto; padding: 52px 20px 90px; }
+  h1 { font-size: 31px; font-weight: 600; margin: 0 0 8px; letter-spacing: -0.5px; }
+  .lede { margin: 0; color: var(--muted); font-size: 14.5px; }
+  .lede b { color: var(--ink); font-weight: 500; }
+  .badge { display: inline-flex; align-items: center; gap: 6px; margin-top: 14px; font-size: 12px; color: var(--red); background: #fff; border: 1px solid var(--line); padding: 4px 11px; border-radius: 999px; }
+
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 22px; margin-top: 20px; }
+  .card-h { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+  .card-h h2 { font-size: 16px; font-weight: 500; margin: 0; display: flex; align-items: center; gap: 8px; }
+  .step { font-size: 11px; color: #fff; background: var(--ink); width: 18px; height: 18px; border-radius: 5px; display: grid; place-items: center; flex: none; }
+  .reload { font-size: 12.5px; color: var(--muted); background: none; border: 0; cursor: pointer; padding: 4px 2px; }
+  .reload:hover { color: var(--ink); }
+
+  .metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+  .m { background: #f6f6f5; border-radius: 10px; padding: 14px 15px; }
+  .m .k { font-size: 12px; color: var(--muted); }
+  .m .v { font-size: 26px; font-weight: 600; letter-spacing: -0.5px; margin-top: 2px; font-variant-numeric: tabular-nums; }
+  .m .v small { font-size: 13px; font-weight: 400; color: var(--muted); margin-left: 3px; }
+  .m.warn .v { color: #b3261e; }
+
+  .list { margin-top: 14px; }
+  .item { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-top: 1px solid #f0f0f0; font-size: 14px; }
+  .item:first-child { border-top: 0; }
+  .item .nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .item .pr { color: var(--ink); font-variant-numeric: tabular-nums; }
+  .item .tg { font-size: 11px; color: var(--faint); border: 1px solid var(--line); border-radius: 999px; padding: 1px 7px; flex: none; }
+  .claim { margin-top: 14px; padding: 12px 14px; background: var(--amber); border: 1px solid #f2e3b8; border-radius: 10px; }
+  .claim p { margin: 0 0 10px; font-size: 13.5px; }
+  .claim .row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+  .pill { font-size: 12.5px; background: #fff; border: 1px solid #eadcba; border-radius: 999px; padding: 3px 10px; }
+  .btn-line { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .btn {
+    height: 38px; padding: 0 16px; border-radius: 10px; border: 1px solid var(--line);
+    background: #fff; color: var(--ink); font: 500 13.5px inherit; cursor: pointer;
   }
-  .card {
-    background: var(--card); border: 1px solid var(--line); border-radius: 14px;
-    padding: 22px; margin-top: 22px;
-  }
-  .field { display: flex; align-items: center; gap: 14px; padding: 10px 0; flex-wrap: wrap; }
-  .field > label { width: 68px; color: var(--muted); font-size: 14px; flex: none; }
+  .btn:hover { border-color: #cfcfd3; }
+  .btn.primary { background: var(--red); border-color: var(--red); color: #fff; }
+  .btn.primary:hover { background: #c02419; }
+  .btn:disabled { opacity: .55; cursor: default; }
+  .tiny { font-size: 12px; color: var(--faint); }
+
+  .field { display: flex; align-items: center; gap: 12px; padding: 9px 0; flex-wrap: wrap; }
+  .check { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); cursor: pointer; white-space: nowrap; }
+  .field > label { width: 66px; color: var(--muted); font-size: 13.5px; flex: none; white-space: nowrap; }
   .stepper { display: inline-flex; align-items: center; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
-  .stepper button {
-    width: 38px; height: 38px; border: 0; background: #fff; font-size: 18px; color: var(--ink);
-    cursor: pointer; line-height: 1;
-  }
+  .stepper button { width: 36px; height: 36px; border: 0; background: #fff; font-size: 17px; color: var(--ink); cursor: pointer; }
   .stepper button:hover { background: #f5f5f7; }
-  .stepper span { width: 44px; text-align: center; font-variant-numeric: tabular-nums; font-size: 16px; }
+  .stepper span { width: 42px; text-align: center; font-variant-numeric: tabular-nums; }
   input[type="text"], input[type="number"] {
-    height: 38px; padding: 0 12px; border: 1px solid var(--line); border-radius: 10px;
-    font: inherit; color: var(--ink); background: #fff; outline: none; width: 130px;
+    height: 36px; padding: 0 11px; border: 1px solid var(--line); border-radius: 10px;
+    font: inherit; color: var(--ink); background: #fff; outline: none; width: 120px;
   }
   input:focus { border-color: #b9b9bd; }
-  .chips { display: flex; gap: 8px; flex-wrap: wrap; }
-  .chip {
-    padding: 6px 13px; border: 1px solid var(--line); border-radius: 999px; background: #fff;
-    font-size: 13px; color: var(--muted); cursor: pointer; user-select: none; transition: all .12s;
-  }
-  .chip:hover { border-color: #c9c9cd; }
+  .chips { display: flex; gap: 7px; flex-wrap: wrap; }
+  .chip { padding: 5px 12px; border: 1px solid var(--line); border-radius: 999px; background: #fff; font-size: 13px; color: var(--muted); cursor: pointer; }
   .chip.on { background: var(--ink); border-color: var(--ink); color: #fff; }
   .check { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); cursor: pointer; }
-  .go {
-    width: 100%; margin-top: 6px; height: 46px; border: 0; border-radius: 12px;
-    background: var(--red); color: #fff; font: 500 15px inherit; cursor: pointer;
-  }
+  .go { width: 100%; margin-top: 8px; height: 44px; border: 0; border-radius: 11px; background: var(--red); color: #fff; font: 500 15px inherit; cursor: pointer; }
   .go:hover { background: #c02419; }
   .go:disabled { background: #d9a5a1; cursor: default; }
-  .hint { color: var(--muted); font-size: 12px; margin-top: 10px; }
 
   .store { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
-  .store b { font-size: 18px; font-weight: 600; }
+  .store b { font-size: 17px; font-weight: 600; }
   .store small { color: var(--muted); }
-  .coupon {
-    margin-top: 14px; background: var(--yellow); border: 1px solid #f2e3b8;
-    border-radius: 10px; padding: 10px 14px; font-size: 13px;
-  }
-  .baseline {
-    margin-top: 12px; padding: 12px 14px; background: #f5f5f7; border-radius: 10px;
-    font-size: 13px; color: var(--muted);
-  }
-  .baseline b { color: var(--ink); font-size: 15px; }
+  .base { margin-top: 12px; padding: 11px 14px; background: #f6f6f5; border-radius: 10px; font-size: 13px; color: var(--muted); }
+  .base b { color: var(--ink); font-size: 15px; }
 
-  .plan { border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; margin-top: 12px; }
-  .plan:first-of-type { border-color: #f0c9c5; box-shadow: 0 0 0 3px #fdf1f0 inset; }
-  .plan-h { display: flex; align-items: center; gap: 10px; }
-  .rank {
-    flex: none; width: 22px; height: 22px; border-radius: 6px; background: var(--ink); color: #fff;
-    font-size: 12px; display: grid; place-items: center;
-  }
+  .plan { border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; margin-top: 11px; }
+  .plan:first-of-type { border-color: #f0c9c5; background: #fffdfd; }
+  .plan-h { display: flex; align-items: center; gap: 9px; }
+  .rank { flex: none; width: 21px; height: 21px; border-radius: 6px; background: var(--ink); color: #fff; font-size: 11.5px; display: grid; place-items: center; }
   .plan:first-of-type .rank { background: var(--red); }
-  .plan-name { font-weight: 500; font-size: 15px; }
-  .row { display: flex; align-items: baseline; gap: 12px; margin-top: 10px; flex-wrap: wrap; }
-  .price { font-size: 26px; font-weight: 600; letter-spacing: -0.5px; font-variant-numeric: tabular-nums; }
+  .plan-name { font-weight: 500; }
+  .row2 { display: flex; align-items: baseline; gap: 12px; margin-top: 9px; flex-wrap: wrap; }
+  .price { font-size: 25px; font-weight: 600; letter-spacing: -0.5px; font-variant-numeric: tabular-nums; }
   .per { color: var(--muted); font-size: 13px; }
-  .save {
-    font-size: 12px; color: var(--green); background: #eaf5ef; border-radius: 999px; padding: 3px 10px;
-  }
-  .lines { margin-top: 12px; border-top: 1px dashed var(--line); padding-top: 10px; }
-  .lines div { display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); padding: 3px 0; }
-  .lines div b { color: var(--ink); font-weight: 400; font-variant-numeric: tabular-nums; }
-  .meta { margin-top: 8px; font-size: 12.5px; color: var(--muted); }
-  .foot { margin-top: 26px; padding-top: 16px; border-top: 1px solid var(--line); font-size: 12px; color: var(--muted); }
+  .save { font-size: 12px; color: var(--green); background: #eaf5ef; border-radius: 999px; padding: 3px 10px; }
+  .lines { margin-top: 11px; border-top: 1px dashed var(--line); padding-top: 9px; }
+  .lines .li { display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); padding: 3px 0; }
+  .lines .li b { color: var(--ink); font-weight: 400; font-variant-numeric: tabular-nums; }
+  .ord { margin-top: 8px; font-size: 13px; }
+  .ord .oh { color: var(--ink); font-weight: 500; margin-top: 8px; }
+  .ord .ol { color: var(--muted); padding-left: 12px; font-size: 12.5px; }
+  .meta { margin-top: 7px; font-size: 12.5px; color: var(--muted); }
+  .foot { margin-top: 24px; padding-top: 15px; border-top: 1px solid var(--line); font-size: 12px; color: var(--faint); }
   .err { color: #a3231a; background: #fdf1f0; border: 1px solid #f5d4d0; border-radius: 10px; padding: 12px 14px; font-size: 13px; }
-  .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid #fff6; border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite; vertical-align: -2px; margin-right: 8px; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  @media (max-width: 560px) { .field > label { width: 100%; } .wrap { padding-top: 32px; } }
+  .spin { display: inline-block; width: 13px; height: 13px; border: 2px solid #fff6; border-top-color: #fff; border-radius: 50%; animation: sp .7s linear infinite; vertical-align: -2px; margin-right: 7px; }
+  @keyframes sp { to { transform: rotate(360deg); } }
+  .skel { color: var(--faint); font-size: 13px; padding: 6px 0; }
+  @media (max-width: 620px) { .metrics { grid-template-columns: 1fr; } .field > label { width: 100%; } .wrap { padding-top: 30px; } }
 </style>
 </head>
 <body>
 <div class="wrap">
-  <header>
-    <h1>麦门省钱助手</h1>
-    <p>说清楚几个人、多少预算、不吃什么，它去查门店、菜单和你手里的券，逐个组合算出实付价。</p>
-    <p>金额全部来自麦当劳 MCP 的实时算价，不是把标价加起来估的。</p>
-    <div class="tag">WorkBuddy × 麦当劳 MCP</div>
-  </header>
+
+  <h1>麦门省钱助手</h1>
+  <p class="lede">不是帮你点餐，是<b>帮你把账户里已经付过钱的东西用掉</b>。</p>
+  <p class="lede" style="margin-top:4px">券、积分、优惠，先盘点清楚，再决定今天这顿怎么点。</p>
+  <div class="badge">WorkBuddy × 麦当劳 MCP</div>
 
   <section class="card">
+    <div class="card-h">
+      <h2><span class="step">1</span>你的券资产</h2>
+      <button class="reload" id="reloadWallet">刷新</button>
+    </div>
+    <div id="wallet"><div class="skel">正在查你的账户…</div></div>
+  </section>
+
+  <section class="card">
+    <div class="card-h"><h2><span class="step">2</span>今天这顿怎么点</h2></div>
     <div class="field">
       <label>几个人</label>
-      <div class="stepper">
-        <button type="button" id="minus">−</button>
-        <span id="people">2</span>
-        <button type="button" id="plus">+</button>
-      </div>
+      <div class="stepper"><button type="button" id="minus">−</button><span id="people">2</span><button type="button" id="plus">+</button></div>
     </div>
-
     <div class="field">
       <label>预算</label>
       <input type="number" id="budget" value="100" min="10" step="10" />
-      <span style="color:var(--muted);font-size:13px">元</span>
+      <span class="tiny">元</span>
       <label class="check"><input type="checkbox" id="perPerson" /> 按人均算</label>
     </div>
-
     <div class="field">
       <label>不吃什么</label>
       <div class="chips" id="chips"></div>
     </div>
-
     <div class="field">
       <label>去哪家</label>
-      <input type="text" id="city" value="武汉" style="width:96px" />
-      <input type="text" id="keyword" value="光谷" style="width:150px" />
-      <span style="color:var(--muted);font-size:12px">商圈名比门店全名好使</span>
+      <input type="text" id="city" value="武汉" style="width:88px" />
+      <input type="text" id="keyword" value="光谷" style="width:140px" />
+      <span class="tiny">商圈名比门店全名好使</span>
     </div>
-
     <div class="field">
       <label>加分项</label>
       <label class="check"><input type="checkbox" id="nutri" /> 顺便看热量</label>
     </div>
-
     <button class="go" id="go">算一算怎么点最划算</button>
-    <div class="hint">只做推荐和比价，不会下任何订单。</div>
+    <div class="tiny" style="margin-top:9px">只做推荐和比价，不会下任何订单。</div>
   </section>
 
   <div id="result"></div>
 
-  <div class="foot">
-    麦当劳 MCP（mcp.mcd.cn）· 到店自取场景 · 价格以所选门店当时的实时计算为准
-  </div>
+  <div class="foot">麦当劳 MCP（mcp.mcd.cn）· 到店自取 · 价格以所选门店实时计算为准 · 本项目非麦当劳官方产品</div>
 </div>
 
 <script>
@@ -158,22 +166,95 @@ const $ = (id) => document.getElementById(id);
 const yuan = (fen) => (Number(fen) / 100).toFixed(2);
 
 $('chips').innerHTML = AVOID.map((a) => `<span class="chip" data-k="${a}">${a}</span>`).join('');
-$('chips').addEventListener('click', (e) => {
+$('chips').onclick = (e) => {
   const el = e.target.closest('.chip'); if (!el) return;
   const k = el.dataset.k;
   if (avoidSet.has(k)) { avoidSet.delete(k); el.classList.remove('on'); }
   else { avoidSet.add(k); el.classList.add('on'); }
-});
+};
 $('minus').onclick = () => { people = Math.max(1, people - 1); $('people').textContent = people; };
 $('plus').onclick = () => { people = Math.min(20, people + 1); $('people').textContent = people; };
 
+/* ---------- 券资产 ---------- */
+async function loadWallet() {
+  $('wallet').innerHTML = '<div class="skel">正在查你的账户…</div>';
+  try {
+    const r = await fetch('/api/wallet', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+    const w = await r.json();
+    if (w.error) throw new Error(w.error);
+    renderWallet(w);
+  } catch (e) {
+    $('wallet').innerHTML = `<div class="err">查不到账户信息：${e.message}</div>`;
+  }
+}
+
+function renderWallet(w) {
+  const acc = w.account || {};
+  const mine = w.mine || [];
+  const claimable = w.claimable || [];
+  const html = `
+    <div class="metrics">
+      <div class="m"><div class="k">手里有券</div><div class="v">${mine.length}<small>张</small></div></div>
+      <div class="m"><div class="k">还能领</div><div class="v">${claimable.length}<small>张</small></div></div>
+      <div class="m ${acc.expired > 0 ? 'warn' : ''}">
+        <div class="k">积分已过期</div>
+        <div class="v">${acc.expired != null ? Math.round(acc.expired) : '—'}<small>分</small></div>
+      </div>
+    </div>
+
+    ${mine.length ? `<div class="list">${mine.map((c) => `
+      <div class="item">
+        <span class="nm">${c.name}</span>
+        ${c.daysLeft != null ? `<span class="tg">${c.daysLeft} 天后过期</span>` : ''}
+        <span class="pr">${c.price != null ? '¥' + c.price.toFixed(2) : '—'}</span>
+      </div>`).join('')}</div>` : '<div class="meta">账户里还没有券。</div>'}
+
+    ${claimable.length ? `
+      <div class="claim">
+        <p><b>还有 ${claimable.length} 张券没领</b>，领了才能算进这一单。</p>
+        <div class="row">${claimable.map((c) => `<span class="pill">${c.title}</span>`).join('')}</div>
+        <div class="btn-line">
+          <button class="btn primary" id="doClaim">一键领取</button>
+          <span class="tiny">会真实写入你的麦当劳账户</span>
+        </div>
+      </div>` : '<div class="meta" style="margin-top:12px">麦麦省的券都已经领完了。</div>'}
+
+    ${acc.expiringThisMonth > 0 ? `<div class="meta">这个月还有 ${acc.expiringThisMonth} 积分要过期。</div>` : ''}
+    <div class="foot" style="border:0;padding:0;margin-top:12px">本次读取账户用了 ${w.calls || '—'} 次 MCP 调用</div>
+  `;
+  $('wallet').innerHTML = html;
+
+  const btn = $('doClaim');
+  if (btn) btn.onclick = async () => {
+    if (!confirm(`这会真的把 ${claimable.length} 张券领到你自己的麦当劳账户里。\n券是免费的，领了不会花钱，但要确认继续吗？`)) return;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spin"></span>领取中…';
+    try {
+      const r = await fetch('/api/claim', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+      const d = await r.json();
+      if (d.error) throw new Error(d.error);
+      renderWallet(d.wallet);
+      const tip = document.createElement('div');
+      tip.className = 'meta';
+      tip.style.color = '#0f7b4f';
+      tip.textContent = `已领取，手里从 ${d.before} 张变成 ${d.after} 张。现在再算这一单，能用的券更多了。`;
+      $('wallet').prepend(tip);
+    } catch (e) {
+      btn.disabled = false;
+      btn.textContent = '重试';
+      alert('领取失败：' + e.message);
+    }
+  };
+}
+
+/* ---------- 方案 ---------- */
 $('go').onclick = async () => {
   const btn = $('go');
   btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span>正在查门店和菜单…';
+  btn.innerHTML = '<span class="spin"></span>正在查门店、菜单和你手里的券…';
   $('result').innerHTML = '';
   try {
-    const res = await fetch('/api/plan', {
+    const r = await fetch('/api/plan', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -186,9 +267,9 @@ $('go').onclick = async () => {
         nutrition: $('nutri').checked,
       }),
     });
-    const data = await res.json();
-    if (data.error) throw new Error(data.error);
-    render(data);
+    const d = await r.json();
+    if (d.error) throw new Error(d.error);
+    renderPlans(d);
   } catch (e) {
     $('result').innerHTML = `<section class="card"><div class="err">出错了：${e.message}</div></section>`;
   } finally {
@@ -197,33 +278,36 @@ $('go').onclick = async () => {
   }
 };
 
-function render(d) {
+function renderPlans(d) {
+  const h = d.history && d.history.summary;
   const head = `
     <section class="card">
       <div class="store">
         <b>${d.store.storeName}</b>
-        <small>门店 ${d.store.storeCode}${d.store.distance != null ? ` · ${d.store.distance}m` : ''} · 到店自取</small>
+        <small>门店 ${d.store.storeCode}${d.store.distance != null ? ' · ' + d.store.distance + 'm' : ''} · 到店自取</small>
       </div>
-      <div class="coupon">${
-        d.coupons.length
-          ? `能用 ${d.coupons.length} 张券：${d.coupons.map((c) => c.title).join('、')}`
-          : '这个门店暂时没有可用券'
-      }</div>
-      ${d.baseline ? `<div class="baseline">一样样分开单点的价格：<b>¥${yuan(d.baseline.price)}</b>（${d.baseline.label}）—— 下面是比它更划算的点法</div>` : ''}
+      ${d.coupons.length ? `<div class="claim" style="background:#eaf5ef;border-color:#cfe7db"><p style="margin:0">这一单能用 ${d.coupons.length} 张券：<b>${d.coupons.map((c) => c.title).join('、')}</b></p></div>` : ''}
+      ${h ? `<div class="base">你过去 ${h.count} 笔订单，单均 <b>¥${h.avgAmount}</b>${h.last ? '　最近一单：' + h.last.desc : ''}</div>` : ''}
+      ${d.baseline ? `<div class="base">一样样分开单点要 <b>¥${yuan(d.baseline.price)}</b>（${d.baseline.label}）—— 下面这些都比它便宜</div>` : ''}
     </section>`;
 
   const plans = d.plans.map((p, i) => {
-    const saved = p.savedVsBaseline;
+    const sv = p.savedVsBaseline;
+    const body = p.ordersDetail
+      ? `<div class="ord">${p.ordersDetail.map((o, k) => `
+          <div class="oh">第 ${k + 1} 单${o.couponTitle ? '（用券：' + o.couponTitle + '）' : '（常规单）'}　实付 ¥${yuan(o.price)}</div>
+          ${o.items.map((it) => `<div class="ol">${it.name} ×${it.quantity}　¥${yuan(it.subtotal)}</div>`).join('')}
+        `).join('')}</div>`
+      : `<div class="lines">${p.items.map((it) => `<div class="li"><span>${it.name} ×${it.quantity}</span><b>¥${yuan(it.subtotal)}</b></div>`).join('')}</div>`;
+
     return `<div class="plan">
       <div class="plan-h"><span class="rank">${i + 1}</span><span class="plan-name">${p.name}</span></div>
-      <div class="row">
+      <div class="row2">
         <span class="price">¥${yuan(p.price)}</span>
         <span class="per">人均 ¥${p.perPerson.toFixed(2)}</span>
-        ${saved > 0 ? `<span class="save">比单点省 ¥${yuan(saved)}</span>` : ''}
+        ${sv > 0 ? `<span class="save">比单点省 ¥${yuan(sv)}</span>` : ''}
       </div>
-      <div class="lines">
-        ${p.items.map((it) => `<div><span>${it.name} ×${it.quantity}</span><b>¥${yuan(it.subtotal)}${it.original > it.subtotal ? ` <s style="color:#a1a1a6">¥${yuan(it.original)}</s>` : ''}</b></div>`).join('')}
-      </div>
+      ${body}
       ${p.content ? `<div class="meta">套餐默认含：${p.content.items.join(' + ')}</div>` : ''}
       ${p.nutrition ? `<div class="meta">约 ${p.nutrition.kcal} 大卡 · 蛋白质 ${p.nutrition.protein}g · 脂肪 ${p.nutrition.fat}g</div>` : ''}
       <div class="meta">${p.note}</div>
@@ -231,16 +315,21 @@ function render(d) {
   }).join('');
 
   const more = d.alternatives.length
-    ? `<div class="meta" style="margin-top:14px">其他候选：${d.alternatives.map((a) => `${a.name} ¥${yuan(a.price)}`).join('　·　')}</div>`
-    : '';
-
+    ? `<div class="meta" style="margin-top:13px">其他候选：${d.alternatives.map((a) => a.name + ' ¥' + yuan(a.price)).join('　·　')}</div>` : '';
   const empty = d.plans.length ? '' : `<div class="err">预算内没有够吃的组合，放宽预算或去掉忌口试试。</div>`;
 
-  $('result').innerHTML = head + `<section class="card">${empty}${plans}${more}
-    <div class="foot" style="border:0;padding:0;margin-top:16px">
-      本次真实调用麦当劳 MCP ${d.mcpCalls} 次 · 试了 ${d.candidatesTested} 种组合，${d.valid} 种有效
-    </div>
+  $('result').innerHTML = head + `<section class="card">
+    <div class="card-h"><h2><span class="step">3</span>给你的方案</h2></div>
+    ${empty}${plans}${more}
+    <div class="foot">本次真实调用麦当劳 MCP ${d.mcpCalls} 次 · 试了 ${d.candidatesTested} 种组合，${d.valid} 种有效</div>
   </section>`;
+}
+
+loadWallet();
+
+// 演示用：加 ?demo=1 打开页面就自动算一次
+if (new URLSearchParams(location.search).get('demo')) {
+  setTimeout(() => $('go').click(), 600);
 }
 </script>
 </body>

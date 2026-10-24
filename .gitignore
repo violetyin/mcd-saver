@@ -4,3 +4,4 @@ tools.json
 out/
 *.log
 .DS_Store
+docs/_*.png

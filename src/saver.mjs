@@ -2,6 +2,8 @@
 // 核心原则：一切金额以 calculate-price 返回值为准（单位：分），绝不用标价相加。
 import { McpClient, loadEnv } from './mcp.mjs';
 import { parseToon, matchNutrition } from './toon.mjs';
+import { walletSnapshot } from './wallet.mjs';
+import { fetchHistory } from './history.mjs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -153,6 +155,44 @@ function buildCandidates({ people, buckets, coupons, filter }) {
   return cands.slice(0, 18); // 控制调用次数，避免演示时超时
 }
 
+// ---------- 拆单候选 ----------
+// 实测结论：一单只能核销一张券，券商品 quantity=2 时价格不变（第 2 份白买）。
+// 所以「多张券」的唯一用尽方式是把餐拆成多笔订单，每人一单。
+function buildSplitCandidates({ people, buckets, coupons, filter }) {
+  if (coupons.length < 2 || people < 2) return [];
+  const cheapMain = (buckets.main || []).filter(filter)[0];
+
+  // 每张券优先给一个人用；券比人多的，多出来的券这一顿用不上
+  const use = coupons.slice(0, people);
+  const orders = [];
+  for (const cp of use) {
+    const p = (cp.products || [])[0];
+    if (!p?.productCode) continue;
+    const hit = Object.values(buckets).flat().find((x) => x.code === p.productCode);
+    if (hit && !filter(hit)) continue;
+    orders.push({
+      couponTitle: cp.title,
+      items: [{ code: p.productCode, quantity: 1, couponId: cp.couponId, couponCode: cp.couponCode }],
+    });
+  }
+  if (orders.length < 2) return [];
+
+  // 券不够覆盖所有人时，剩下的人补一单常规主食
+  const short = people - orders.length;
+  if (short > 0 && cheapMain) {
+    orders.push({ couponTitle: null, items: [{ code: cheapMain.code, quantity: short }] });
+  }
+
+  return [{
+    name: `拆单：${orders.filter((o) => o.couponTitle).length} 张券分 ${orders.length} 单下`,
+    kind: 'split',
+    orders,
+    items: [],
+    covers: people,
+    note: `一单只能核销一张券，拆开才能把 ${orders.filter((o) => o.couponTitle).length} 张券都用上`,
+  }];
+}
+
 // ---------- 主流程 ----------
 export async function runSaver(opts) {
   const env = loadEnv(path.join(ROOT, '.env'));
@@ -189,6 +229,29 @@ export async function runSaver(opts) {
 
   const base = { storeCode: String(store.storeCode), orderType: 1, beType: 1 };
 
+  // 1.5 账户券资产盘点（这是整条链的起点：先看手里有什么，再看菜单）
+  let wallet = await walletSnapshot(client);
+  step(`券资产 → 持有 ${wallet.mine.length} 张、可领未领 ${wallet.claimable.length} 张${wallet.account ? `、积分已过期 ${wallet.account.expired}` : ''}`);
+
+  // 可选：先领券再算（账户写操作，必须由用户显式开启）
+  if (opts.claim && wallet.claimable.length) {    try {
+      await client.call('auto-bind-coupons', {});
+      step(`auto-bind-coupons → 已领取麦麦省券，重新盘点`);
+      wallet = await walletSnapshot(client);
+      step(`领后持有 ${wallet.mine.length} 张、剩余可领 ${wallet.claimable.length} 张`);
+    } catch (e) {
+      step(`⚠️ 领券失败（按原券池继续）：${String(e.message).slice(0, 70)}`);
+    }
+  }
+
+  // 1.6 历史订单（个人基线，没有就降级，不影响主流程）
+  const history = await fetchHistory(client);
+  if (history.summary) {
+    step(`order-list → 历史 ${history.summary.count} 笔，有效 ${history.summary.validCount} 笔，单均 ¥${history.summary.avgAmount}`);
+  } else {
+    step(`order-list → 无历史订单（本轮用标准基线）`);
+  }
+
   // 2. 菜单 + 本店券 + 营养（串行：并发请求这个服务偶发失败）
   const menuRes = await client.call('query-meals', base);
   const menu = menuRes?.data || {};
@@ -212,6 +275,8 @@ export async function runSaver(opts) {
   const buckets = buildRoleBuckets(menu);
   const filter = makeFilter(opts.avoid);
   const cands = buildCandidates({ people, buckets, coupons, filter });
+  const splitCands = buildSplitCandidates({ people, buckets, coupons, filter });
+  const allCands = [...cands, ...splitCands];
 
   // 单点基线：每人「一份主食 + 一份小食 + 一杯饮品」全部分开单点要多少钱
   // 这是「省钱」的参照物——套餐/券方案比它少付多少，才是真的省
@@ -242,33 +307,63 @@ export async function runSaver(opts) {
   }
 
   // 3. 逐个算实付价（唯一可信金额来源）
+  const priceItems = async (items) => {
+    const r = await client.call('calculate-price', {
+      ...base,
+      items: items.map((i) => ({
+        productCode: i.code,
+        quantity: i.quantity,
+        ...(i.couponId ? { couponId: i.couponId, couponCode: i.couponCode } : {}),
+      })),
+    });
+    const d = r?.data || {};
+    return {
+      price: Number(d.price),
+      original: Number(d.originalPrice || d.price),
+      discount: Number(d.discount || 0),
+      productList: (d.productList || []).map((p) => ({
+        name: p.productName,
+        quantity: p.quantity,
+        subtotal: Number(p.subtotal),
+        original: Number(p.originalSubtotal ?? p.subtotal),
+      })),
+    };
+  };
+
   const priced = [];
-  for (const cand of cands) {
+  for (const cand of allCands) {
     try {
-      const r = await client.call('calculate-price', {
-        ...base,
-        items: cand.items.map((i) => ({
-          productCode: i.code,
-          quantity: i.quantity,
-          ...(i.couponId ? { couponId: i.couponId, couponCode: i.couponCode } : {}),
-        })),
-      });
-      const d = r?.data || {};
-      const price = Number(d.price);
-      const original = Number(d.originalPrice || d.price);
+      // 拆单：每笔订单单独算价，再汇总（因为一单只能核销一张券）
+      if (cand.kind === 'split') {
+        let price = 0, original = 0, discount = 0;
+        const detail = [];
+        let bad = false;
+        for (const o of cand.orders) {
+          const r = await priceItems(o.items);
+          if (!Number.isFinite(r.price) || r.price <= 0) { bad = true; break; }
+          price += r.price; original += r.original; discount += r.discount;
+          detail.push({ couponTitle: o.couponTitle, price: r.price, items: r.productList });
+        }
+        if (bad) continue;
+        priced.push({
+          ...cand, price, original, discount, ordersDetail: detail,
+          perPerson: Math.round(price / Math.max(1, cand.covers)) / 100,
+          savedVsBaseline: baseline ? baseline.price - price : null,
+          rawItems: [],
+          items: detail.flatMap((d) => d.items),
+        });
+        continue;
+      }
+
+      const r = await priceItems(cand.items);
       // 券商品不带券会返回 0，必须当作无效，否则会被排成「最便宜」
-      if (!Number.isFinite(price) || price <= 0) continue;
-      const items = (d.productList || []).map((p) => ({
-        name: p.productName, quantity: p.quantity,
-        subtotal: Number(p.subtotal), original: Number(p.originalSubtotal ?? p.subtotal),
-      }));
+      if (!Number.isFinite(r.price) || r.price <= 0) continue;
       priced.push({
-        ...cand, price, original,
-        discount: Number(d.discount || 0),
-        perPerson: Math.round(price / Math.max(1, cand.covers)) / 100,
-        savedVsBaseline: baseline ? baseline.price - price : null,
+        ...cand, price: r.price, original: r.original, discount: r.discount,
+        perPerson: Math.round(r.price / Math.max(1, cand.covers)) / 100,
+        savedVsBaseline: baseline ? baseline.price - r.price : null,
         rawItems: cand.items,
-        items,
+        items: r.productList,
       });
     } catch (e) {
       step(`⚠️ ${cand.name} 算价失败：${String(e.message).slice(0, 80)}`);
@@ -321,9 +416,11 @@ export async function runSaver(opts) {
     store: { storeCode: String(store.storeCode), storeName: store.storeName, address: store.address, distance: store.distance },
     input: { people, budgetTotal, avoid: opts.avoid || [], city: opts.city, keyword: opts.keyword },
     coupons: coupons.map((c) => ({ title: c.title, couponId: c.couponId, valid: c.tradeDateTime })),
-    candidatesTested: cands.length,
+    candidatesTested: allCands.length,
     valid: priced.length,
     baseline,
+    wallet,
+    history,
     plans: top,
     alternatives: inBudget.slice(3, 6),
     mcpCalls: client.calls,

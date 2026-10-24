@@ -2,6 +2,12 @@
 // 命令行入口：node src/cli.mjs --people 2 --budget 100 --avoid 辣
 import { spawnSync } from 'node:child_process';
 import { runSaver, yuan } from './saver.mjs';
+import { McpClient, loadEnv } from './mcp.mjs';
+import { walletSnapshot, formatWallet } from './wallet.mjs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 // 某些环境走本地代理，Node 的 fetch 默认不读 HTTPS_PROXY，这里自动重启一次带上开关
 if ((process.env.HTTPS_PROXY || process.env.https_proxy) && !process.env.NODE_USE_ENV_PROXY && !process.env.__MCD_REEXEC) {
@@ -25,6 +31,7 @@ function parseArgs(argv) {
     else if (a === '--keyword' || a === '-k') out.keyword = next();
     else if (a === '--store') out.storeCode = next();
     else if (a === '--nutrition') out.nutrition = true;
+    else if (a === '--claim') out.claim = true;
     else if (a === '--json') out.json = true;
     else if (a === '--help' || a === '-h') out.help = true;
   }
@@ -32,6 +39,29 @@ function parseArgs(argv) {
 }
 
 const args = parseArgs(process.argv.slice(2));
+
+// 子命令：node src/cli.mjs wallet [--claim]
+if (process.argv[2] === 'wallet') {
+  const env = loadEnv(path.join(ROOT, '.env'));
+  const client = new McpClient({ url: 'https://mcp.mcd.cn', token: env.MCD_MCP_TOKEN });
+  await client.init();
+  let w = await walletSnapshot(client);
+  if (args.claim && w.claimable.length) {
+    console.log(`\n准备领取 ${w.claimable.length} 张麦麦省券（会真实写入你的账户）…`);
+    await client.call('auto-bind-coupons', {});
+    w = await walletSnapshot(client);
+  }
+  console.log('\n【账户券资产】');
+  console.log(formatWallet(w));
+  if (w.expiringSoon.length) {
+    console.log(`\n⚠️ ${w.expiringSoon.length} 张券 7 天内过期，别放坏了。`);
+  }
+  if (w.claimable.length && !args.claim) {
+    console.log(`\n还有 ${w.claimable.length} 张没领。加 --claim 一键领取（会真实写入账户）。`);
+  }
+  console.log(`\n（本次调用 MCP ${client.calls} 次）\n`);
+  process.exit(0);
+}
 
 if (args.help) {
   console.log(`
@@ -64,6 +94,21 @@ try {
   console.log(`   门店编号 ${r.store.storeCode}｜到店自取`);
   console.log(`🥤 需求：${r.input.people} 人${r.input.budgetTotal ? ` · 预算 ¥${r.input.budgetTotal}` : ''}${r.input.avoid.length ? ` · 忌口 ${r.input.avoid.join('/')}` : ''}`);
   console.log(`🎟  可用券：${r.coupons.length} 张${r.coupons.length ? `（${r.coupons.map((c) => c.title).join('、')}）` : ''}`);
+  if (r.wallet) {
+    const w = r.wallet;
+    console.log(`💼 券资产：持有 ${w.mine.length} 张${w.mine.length ? `（${w.mine.map((c) => c.name).join('、')}）` : ''}｜麦麦省可领未领 ${w.claimable.length} 张`);
+    if (w.claimable.length) {
+      console.log(`   · 还没领：${w.claimable.map((c) => c.title).join('、')}`);
+      if (!args.claim) console.log(`   · 加 --claim 可先领券再算（会真实写入你的账户）`);
+    }
+    if (w.account) {
+      console.log(`   · 积分：可用 ${w.account.available}｜已过期 ${w.account.expired}｜本月将过期 ${w.account.expiringThisMonth}`);
+    }
+  }
+  if (r.history?.summary) {
+    const h = r.history.summary;
+    console.log(`🧾 你的历史：${h.count} 笔订单，单均 ¥${h.avgAmount}${h.last ? `｜最近一单：${h.last.desc}` : ''}`);
+  }
   if (r.baseline) {
     console.log(`📊 单点基线（${r.baseline.label}）：¥${yuan(r.baseline.price)}，人均 ¥${r.baseline.perPerson.toFixed(2)}`);
   }
@@ -77,9 +122,18 @@ try {
     const saved = p.original - p.price;
     const pct = p.original > 0 ? Math.round((saved / p.original) * 100) : 0;
     console.log(`\n方案 ${i + 1}｜${p.name}`);
-    for (const it of p.items) {
-      const cut = it.original > it.subtotal ? `（原价 ¥${yuan(it.original)}）` : '';
-      console.log(`   · ${it.name} ×${it.quantity}   ¥${yuan(it.subtotal)}${cut}`);
+    if (p.ordersDetail) {
+      p.ordersDetail.forEach((o, k) => {
+        console.log(`   第 ${k + 1} 单${o.couponTitle ? `（用券：${o.couponTitle}）` : '（常规单）'}   实付 ¥${yuan(o.price)}`);
+        for (const it of o.items) {
+          console.log(`      · ${it.name} ×${it.quantity}   ¥${yuan(it.subtotal)}`);
+        }
+      });
+    } else {
+      for (const it of p.items) {
+        const cut = it.original > it.subtotal ? `（原价 ¥${yuan(it.original)}）` : '';
+        console.log(`   · ${it.name} ×${it.quantity}   ¥${yuan(it.subtotal)}${cut}`);
+      }
     }
     let money = `   ── 实付 ¥${yuan(p.price)}（标价 ¥${yuan(p.original)}）`;
     if (saved > 0) money += `，券省 ¥${yuan(saved)}（${pct}%）`;

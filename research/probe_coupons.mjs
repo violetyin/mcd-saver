@@ -1,0 +1,13 @@
+import { McpClient, loadEnv } from '../src/mcp.mjs';
+import path from 'node:path';
+const env = loadEnv(path.resolve('.env'));
+const c = new McpClient({ url:'https://mcp.mcd.cn', token: env.MCD_MCP_TOKEN });
+await c.init();
+const r = await c.call('available-coupons', {});
+const txt = String(r);
+const titles = [...txt.matchAll(/优惠券标题：([^\n\\]+)/g)].map(m=>m[1].trim());
+const status = [...txt.matchAll(/状态：([^\n\\]+)/g)].map(m=>m[1].trim());
+console.log('麦麦省可领券数:', titles.length);
+titles.forEach((t,i)=>console.log(' -', t, '｜', status[i]||''));
+const my = String(await c.call('query-my-coupons', {}));
+console.log('\n已持券数:', (my.match(/^## /gm)||[]).length);
