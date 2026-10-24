@@ -1,0 +1,15 @@
+{
+  "name": "mcd-saver",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "麦门省钱助手：用麦当劳 MCP 把「人数 + 预算 + 口味」算成一单最划算的组合",
+  "bin": { "mcd-saver": "src/cli.mjs" },
+  "scripts": {
+    "start": "node src/cli.mjs",
+    "demo": "node src/cli.mjs --people 2 --budget 100 --nutrition",
+    "probe": "node src/probe.mjs"
+  },
+  "engines": { "node": ">=18" },
+  "license": "MIT"
+}
