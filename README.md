@@ -86,6 +86,14 @@ node src/cli.mjs -p 2 -b 100 --json
 | `--nutrition` | 附带热量 / 蛋白质 / 脂肪 |
 | `--json` | 输出 JSON |
 
+## 网页版（路演/录屏用）
+
+```bash
+node web/server.mjs        # 打开 http://127.0.0.1:4173
+```
+
+点选人数、预算、忌口，直接出三套方案卡片。Token 只在服务端，前端拿不到，也不需要额外依赖。
+
 ## 作为 WorkBuddy Skill 使用
 
 把整个仓库目录放进 `~/.workbuddy/skills/mcd-saver/`，之后在 WorkBuddy 里直接说：

@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>麦门省钱助手</title>
+<style>
+  :root {
+    --ink: #1d1d1f; --muted: #6e6e73; --line: #e5e5e7; --bg: #fafafa;
+    --card: #ffffff; --red: #da291c; --green: #0f7b4f; --yellow: #fff8e6;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 15px/1.65 -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 56px 20px 80px; }
+  header h1 { font-size: 30px; font-weight: 600; margin: 0 0 8px; letter-spacing: -0.4px; }
+  header p { margin: 0 0 4px; color: var(--muted); font-size: 14px; }
+  .tag {
+    display: inline-flex; align-items: center; gap: 6px; margin-top: 12px;
+    font-size: 12px; color: var(--red); background: #fff; border: 1px solid var(--line);
+    padding: 4px 10px; border-radius: 999px;
+  }
+  .card {
+    background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+    padding: 22px; margin-top: 22px;
+  }
+  .field { display: flex; align-items: center; gap: 14px; padding: 10px 0; flex-wrap: wrap; }
+  .field > label { width: 68px; color: var(--muted); font-size: 14px; flex: none; }
+  .stepper { display: inline-flex; align-items: center; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  .stepper button {
+    width: 38px; height: 38px; border: 0; background: #fff; font-size: 18px; color: var(--ink);
+    cursor: pointer; line-height: 1;
+  }
+  .stepper button:hover { background: #f5f5f7; }
+  .stepper span { width: 44px; text-align: center; font-variant-numeric: tabular-nums; font-size: 16px; }
+  input[type="text"], input[type="number"] {
+    height: 38px; padding: 0 12px; border: 1px solid var(--line); border-radius: 10px;
+    font: inherit; color: var(--ink); background: #fff; outline: none; width: 130px;
+  }
+  input:focus { border-color: #b9b9bd; }
+  .chips { display: flex; gap: 8px; flex-wrap: wrap; }
+  .chip {
+    padding: 6px 13px; border: 1px solid var(--line); border-radius: 999px; background: #fff;
+    font-size: 13px; color: var(--muted); cursor: pointer; user-select: none; transition: all .12s;
+  }
+  .chip:hover { border-color: #c9c9cd; }
+  .chip.on { background: var(--ink); border-color: var(--ink); color: #fff; }
+  .check { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); cursor: pointer; }
+  .go {
+    width: 100%; margin-top: 6px; height: 46px; border: 0; border-radius: 12px;
+    background: var(--red); color: #fff; font: 500 15px inherit; cursor: pointer;
+  }
+  .go:hover { background: #c02419; }
+  .go:disabled { background: #d9a5a1; cursor: default; }
+  .hint { color: var(--muted); font-size: 12px; margin-top: 10px; }
+
+  .store { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+  .store b { font-size: 18px; font-weight: 600; }
+  .store small { color: var(--muted); }
+  .coupon {
+    margin-top: 14px; background: var(--yellow); border: 1px solid #f2e3b8;
+    border-radius: 10px; padding: 10px 14px; font-size: 13px;
+  }
+  .baseline {
+    margin-top: 12px; padding: 12px 14px; background: #f5f5f7; border-radius: 10px;
+    font-size: 13px; color: var(--muted);
+  }
+  .baseline b { color: var(--ink); font-size: 15px; }
+
+  .plan { border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; margin-top: 12px; }
+  .plan:first-of-type { border-color: #f0c9c5; box-shadow: 0 0 0 3px #fdf1f0 inset; }
+  .plan-h { display: flex; align-items: center; gap: 10px; }
+  .rank {
+    flex: none; width: 22px; height: 22px; border-radius: 6px; background: var(--ink); color: #fff;
+    font-size: 12px; display: grid; place-items: center;
+  }
+  .plan:first-of-type .rank { background: var(--red); }
+  .plan-name { font-weight: 500; font-size: 15px; }
+  .row { display: flex; align-items: baseline; gap: 12px; margin-top: 10px; flex-wrap: wrap; }
+  .price { font-size: 26px; font-weight: 600; letter-spacing: -0.5px; font-variant-numeric: tabular-nums; }
+  .per { color: var(--muted); font-size: 13px; }
+  .save {
+    font-size: 12px; color: var(--green); background: #eaf5ef; border-radius: 999px; padding: 3px 10px;
+  }
+  .lines { margin-top: 12px; border-top: 1px dashed var(--line); padding-top: 10px; }
+  .lines div { display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); padding: 3px 0; }
+  .lines div b { color: var(--ink); font-weight: 400; font-variant-numeric: tabular-nums; }
+  .meta { margin-top: 8px; font-size: 12.5px; color: var(--muted); }
+  .foot { margin-top: 26px; padding-top: 16px; border-top: 1px solid var(--line); font-size: 12px; color: var(--muted); }
+  .err { color: #a3231a; background: #fdf1f0; border: 1px solid #f5d4d0; border-radius: 10px; padding: 12px 14px; font-size: 13px; }
+  .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid #fff6; border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite; vertical-align: -2px; margin-right: 8px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @media (max-width: 560px) { .field > label { width: 100%; } .wrap { padding-top: 32px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>麦门省钱助手</h1>
+    <p>说清楚几个人、多少预算、不吃什么，它去查门店、菜单和你手里的券，逐个组合算出实付价。</p>
+    <p>金额全部来自麦当劳 MCP 的实时算价，不是把标价加起来估的。</p>
+    <div class="tag">WorkBuddy × 麦当劳 MCP</div>
+  </header>
+
+  <section class="card">
+    <div class="field">
+      <label>几个人</label>
+      <div class="stepper">
+        <button type="button" id="minus">−</button>
+        <span id="people">2</span>
+        <button type="button" id="plus">+</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>预算</label>
+      <input type="number" id="budget" value="100" min="10" step="10" />
+      <span style="color:var(--muted);font-size:13px">元</span>
+      <label class="check"><input type="checkbox" id="perPerson" /> 按人均算</label>
+    </div>
+
+    <div class="field">
+      <label>不吃什么</label>
+      <div class="chips" id="chips"></div>
+    </div>
+
+    <div class="field">
+      <label>去哪家</label>
+      <input type="text" id="city" value="武汉" style="width:96px" />
+      <input type="text" id="keyword" value="光谷" style="width:150px" />
+      <span style="color:var(--muted);font-size:12px">商圈名比门店全名好使</span>
+    </div>
+
+    <div class="field">
+      <label>加分项</label>
+      <label class="check"><input type="checkbox" id="nutri" /> 顺便看热量</label>
+    </div>
+
+    <button class="go" id="go">算一算怎么点最划算</button>
+    <div class="hint">只做推荐和比价，不会下任何订单。</div>
+  </section>
+
+  <div id="result"></div>
+
+  <div class="foot">
+    麦当劳 MCP（mcp.mcd.cn）· 到店自取场景 · 价格以所选门店当时的实时计算为准
+  </div>
+</div>
+
+<script>
+const AVOID = ['辣', '牛肉', '鸡肉', '猪肉', '鱼', '咖啡', '冰'];
+let people = 2;
+const avoidSet = new Set();
+const $ = (id) => document.getElementById(id);
+const yuan = (fen) => (Number(fen) / 100).toFixed(2);
+
+$('chips').innerHTML = AVOID.map((a) => `<span class="chip" data-k="${a}">${a}</span>`).join('');
+$('chips').addEventListener('click', (e) => {
+  const el = e.target.closest('.chip'); if (!el) return;
+  const k = el.dataset.k;
+  if (avoidSet.has(k)) { avoidSet.delete(k); el.classList.remove('on'); }
+  else { avoidSet.add(k); el.classList.add('on'); }
+});
+$('minus').onclick = () => { people = Math.max(1, people - 1); $('people').textContent = people; };
+$('plus').onclick = () => { people = Math.min(20, people + 1); $('people').textContent = people; };
+
+$('go').onclick = async () => {
+  const btn = $('go');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>正在查门店和菜单…';
+  $('result').innerHTML = '';
+  try {
+    const res = await fetch('/api/plan', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        people,
+        budget: Number($('budget').value) || null,
+        budgetPerPerson: $('perPerson').checked,
+        avoid: [...avoidSet],
+        city: $('city').value.trim(),
+        keyword: $('keyword').value.trim(),
+        nutrition: $('nutri').checked,
+      }),
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    render(data);
+  } catch (e) {
+    $('result').innerHTML = `<section class="card"><div class="err">出错了：${e.message}</div></section>`;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '再算一次';
+  }
+};
+
+function render(d) {
+  const head = `
+    <section class="card">
+      <div class="store">
+        <b>${d.store.storeName}</b>
+        <small>门店 ${d.store.storeCode}${d.store.distance != null ? ` · ${d.store.distance}m` : ''} · 到店自取</small>
+      </div>
+      <div class="coupon">${
+        d.coupons.length
+          ? `能用 ${d.coupons.length} 张券：${d.coupons.map((c) => c.title).join('、')}`
+          : '这个门店暂时没有可用券'
+      }</div>
+      ${d.baseline ? `<div class="baseline">一样样分开单点的价格：<b>¥${yuan(d.baseline.price)}</b>（${d.baseline.label}）—— 下面是比它更划算的点法</div>` : ''}
+    </section>`;
+
+  const plans = d.plans.map((p, i) => {
+    const saved = p.savedVsBaseline;
+    return `<div class="plan">
+      <div class="plan-h"><span class="rank">${i + 1}</span><span class="plan-name">${p.name}</span></div>
+      <div class="row">
+        <span class="price">¥${yuan(p.price)}</span>
+        <span class="per">人均 ¥${p.perPerson.toFixed(2)}</span>
+        ${saved > 0 ? `<span class="save">比单点省 ¥${yuan(saved)}</span>` : ''}
+      </div>
+      <div class="lines">
+        ${p.items.map((it) => `<div><span>${it.name} ×${it.quantity}</span><b>¥${yuan(it.subtotal)}${it.original > it.subtotal ? ` <s style="color:#a1a1a6">¥${yuan(it.original)}</s>` : ''}</b></div>`).join('')}
+      </div>
+      ${p.content ? `<div class="meta">套餐默认含：${p.content.items.join(' + ')}</div>` : ''}
+      ${p.nutrition ? `<div class="meta">约 ${p.nutrition.kcal} 大卡 · 蛋白质 ${p.nutrition.protein}g · 脂肪 ${p.nutrition.fat}g</div>` : ''}
+      <div class="meta">${p.note}</div>
+    </div>`;
+  }).join('');
+
+  const more = d.alternatives.length
+    ? `<div class="meta" style="margin-top:14px">其他候选：${d.alternatives.map((a) => `${a.name} ¥${yuan(a.price)}`).join('　·　')}</div>`
+    : '';
+
+  const empty = d.plans.length ? '' : `<div class="err">预算内没有够吃的组合，放宽预算或去掉忌口试试。</div>`;
+
+  $('result').innerHTML = head + `<section class="card">${empty}${plans}${more}
+    <div class="foot" style="border:0;padding:0;margin-top:16px">
+      本次真实调用麦当劳 MCP ${d.mcpCalls} 次 · 试了 ${d.candidatesTested} 种组合，${d.valid} 种有效
+    </div>
+  </section>`;
+}
+</script>
+</body>
+</html>

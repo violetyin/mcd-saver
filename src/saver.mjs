@@ -2,6 +2,11 @@
 // 核心原则：一切金额以 calculate-price 返回值为准（单位：分），绝不用标价相加。
 import { McpClient, loadEnv } from './mcp.mjs';
 import { parseToon, matchNutrition } from './toon.mjs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+// 无论从哪个目录启动，都读项目根目录的 .env
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 export const MCD_URL = 'https://mcp.mcd.cn';
 
@@ -150,7 +155,7 @@ function buildCandidates({ people, buckets, coupons, filter }) {
 
 // ---------- 主流程 ----------
 export async function runSaver(opts) {
-  const env = loadEnv();
+  const env = loadEnv(path.join(ROOT, '.env'));
   const token = opts.token || env.MCD_MCP_TOKEN;
   if (!token) throw new Error('缺少 MCD_MCP_TOKEN，请复制 .env.example 为 .env 并填入 Token');
 
