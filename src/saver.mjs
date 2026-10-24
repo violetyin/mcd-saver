@@ -346,7 +346,7 @@ export async function runSaver(opts) {
         }
         if (bad) continue;
         priced.push({
-          ...cand, price, original, discount, ordersDetail: detail,
+          ...cand, price, original, discount, ordersDetail: detail, rawOrders: cand.orders,
           perPerson: Math.round(price / Math.max(1, cand.covers)) / 100,
           savedVsBaseline: baseline ? baseline.price - price : null,
           rawItems: [],

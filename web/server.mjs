@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { runSaver } from '../src/saver.mjs';
 import { walletSnapshot } from '../src/wallet.mjs';
 import { McpClient, loadEnv } from '../src/mcp.mjs';
+import { createOrder, cancelOrder } from '../src/order.mjs';
 
 // 有本地代理时，Node 的 fetch 不读 HTTPS_PROXY，自动重启一次带上开关
 if ((process.env.HTTPS_PROXY || process.env.https_proxy) && !process.env.NODE_USE_ENV_PROXY && !process.env.__MCD_REEXEC) {
@@ -72,6 +73,51 @@ const server = http.createServer(async (req, res) => {
         wallet: after,
         calls: client.calls,
       });
+    } catch (e) { json(500, { error: e.message }); }
+    return;
+  }
+
+  // 下单：会真实创建订单（未支付），付不付由用户决定
+  if (url.pathname === '/api/order' && req.method === 'POST') {
+    try {
+      const b = await readBody(req);
+      const client = makeClient();
+      await client.init();
+      const ways = Array.isArray(b.orders) ? b.orders : [];
+      if (!ways.length) throw new Error('没有可下单的内容');
+
+      const created = [];
+      for (const order of ways) {
+        const items = (order.items || []).map((i) => ({
+          productCode: i.code || i.productCode,
+          quantity: Number(i.quantity) || 1,
+          ...(i.couponId ? { couponId: i.couponId, couponCode: i.couponCode } : {}),
+        }));
+        const r = await createOrder(client, {
+          storeCode: b.storeCode,
+          beType: 1,
+          orderType: 1,
+          takeWayCode: b.takeWayCode || 'eat-in',
+          items,
+          remark: b.remark,
+        });
+        created.push({ ...r, couponTitle: order.couponTitle || null });
+      }
+      json(200, { ok: true, orders: created, calls: client.calls });
+    } catch (e) { json(500, { error: e.message }); }
+    return;
+  }
+
+  // 取消订单
+  if (url.pathname === '/api/cancel' && req.method === 'POST') {
+    try {
+      const b = await readBody(req);
+      const client = makeClient();
+      await client.init();
+      const ids = Array.isArray(b.orderIds) ? b.orderIds : [b.orderId].filter(Boolean);
+      const results = [];
+      for (const id of ids) results.push(await cancelOrder(client, id, b.reason ?? -1));
+      json(200, { results, calls: client.calls });
     } catch (e) { json(500, { error: e.message }); }
     return;
   }

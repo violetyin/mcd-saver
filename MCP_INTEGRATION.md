@@ -22,7 +22,14 @@ Token 只从 `.env` 的 `MCD_MCP_TOKEN` 读取，仓库内 `.env` 已被 `.gitig
 | `calculate-price` | **核心**：每个候选组合算一次实付价（含券），另算 1 次单点基线 | 17 |
 | `query-meal-detail` | 给前三个方案补「套餐默认含哪些餐品」 | ≤3 |
 | `list-nutrition-foods` | `--nutrition` 时取营养表（TOON 格式） | 1 |
-| `now-time-info` / `create-order` / `cancel-order` | **未使用**。不下单，不产生真实订单 | 0 |
+| `order-list` | 取最近 10 笔历史订单，算个人单均与最近一单 | 1 |
+| `query-my-coupons` | 账户已持券（返回 markdown，非 JSON） | 1 |
+| `available-coupons` | 麦麦省可领未领券（markdown） | 1 |
+| `query-my-account` | 积分：可用 / 已过期 / 本月将过期 | 1 |
+| `auto-bind-coupons` | 一键领券（账户写操作，需二次确认） | 0 或 1 |
+| `create-order` | 用户确认后创建订单，返回 `payH5Url`（未支付） | 按方案笔数 |
+| `cancel-order` | 取消刚创建的订单，`cancelReasonCode=-1` | 按需 |
+| `now-time-info` | 未使用 | 0 |
 
 合计约 **20～24 次/次运行**，远低于官方 600 次/分钟的限流。
 
