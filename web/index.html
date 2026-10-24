@@ -21,12 +21,13 @@
   .lede b { color: var(--ink); font-weight: 500; }
   .badge { display: inline-flex; align-items: center; gap: 6px; margin-top: 14px; font-size: 12px; color: var(--red); background: #fff; border: 1px solid var(--line); padding: 4px 11px; border-radius: 999px; }
 
-  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 22px; margin-top: 20px; }
-  .card-h { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 22px; margin-top: 18px; }
+  .card-h { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 15px; }
   .card-h h2 { font-size: 16px; font-weight: 500; margin: 0; display: flex; align-items: center; gap: 8px; }
   .step { font-size: 11px; color: #fff; background: var(--ink); width: 18px; height: 18px; border-radius: 5px; display: grid; place-items: center; flex: none; }
   .reload { font-size: 12.5px; color: var(--muted); background: none; border: 0; cursor: pointer; padding: 4px 2px; }
   .reload:hover { color: var(--ink); }
+  .dim { opacity: .45; pointer-events: none; }
 
   .metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
   .m { background: #f6f6f5; border-radius: 10px; padding: 14px 15px; }
@@ -38,7 +39,7 @@
   .list { margin-top: 14px; }
   .item { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-top: 1px solid #f0f0f0; font-size: 14px; }
   .item:first-child { border-top: 0; }
-  .item .nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .item .nm { flex: 1; min-width: 0; }
   .item .pr { color: var(--ink); font-variant-numeric: tabular-nums; }
   .item .tg { font-size: 11px; color: var(--faint); border: 1px solid var(--line); border-radius: 999px; padding: 1px 7px; flex: none; }
   .claim { margin-top: 14px; padding: 12px 14px; background: var(--amber); border: 1px solid #f2e3b8; border-radius: 10px; }
@@ -46,10 +47,7 @@
   .claim .row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
   .pill { font-size: 12.5px; background: #fff; border: 1px solid #eadcba; border-radius: 999px; padding: 3px 10px; }
   .btn-line { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-  .btn {
-    height: 38px; padding: 0 16px; border-radius: 10px; border: 1px solid var(--line);
-    background: #fff; color: var(--ink); font: 500 13.5px inherit; cursor: pointer;
-  }
+  .btn { height: 38px; padding: 0 16px; border-radius: 10px; border: 1px solid var(--line); background: #fff; color: var(--ink); font: 500 13.5px inherit; cursor: pointer; }
   .btn:hover { border-color: #cfcfd3; }
   .btn.primary { background: var(--red); border-color: var(--red); color: #fff; }
   .btn.primary:hover { background: #c02419; }
@@ -57,7 +55,6 @@
   .tiny { font-size: 12px; color: var(--faint); }
 
   .field { display: flex; align-items: center; gap: 12px; padding: 9px 0; flex-wrap: wrap; }
-  .check { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); cursor: pointer; white-space: nowrap; }
   .field > label { width: 66px; color: var(--muted); font-size: 13.5px; flex: none; white-space: nowrap; }
   .stepper { display: inline-flex; align-items: center; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
   .stepper button { width: 36px; height: 36px; border: 0; background: #fff; font-size: 17px; color: var(--ink); cursor: pointer; }
@@ -71,10 +68,24 @@
   .chips { display: flex; gap: 7px; flex-wrap: wrap; }
   .chip { padding: 5px 12px; border: 1px solid var(--line); border-radius: 999px; background: #fff; font-size: 13px; color: var(--muted); cursor: pointer; }
   .chip.on { background: var(--ink); border-color: var(--ink); color: #fff; }
-  .check { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); cursor: pointer; }
+  .check { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); cursor: pointer; white-space: nowrap; }
   .go { width: 100%; margin-top: 8px; height: 44px; border: 0; border-radius: 11px; background: var(--red); color: #fff; font: 500 15px inherit; cursor: pointer; }
   .go:hover { background: #c02419; }
   .go:disabled { background: #d9a5a1; cursor: default; }
+
+  .stores { display: grid; gap: 8px; margin-top: 12px; }
+  .store-opt {
+    display: flex; align-items: center; gap: 12px; padding: 11px 14px; border: 1px solid var(--line);
+    border-radius: 10px; cursor: pointer; background: #fff; transition: border-color .12s;
+  }
+  .store-opt:hover { border-color: #cfcfd3; }
+  .store-opt.on { border-color: var(--red); background: #fffdfd; box-shadow: 0 0 0 3px #fdf1f0 inset; }
+  .store-opt .radio { width: 15px; height: 15px; border-radius: 50%; border: 1.5px solid #c9c9cd; flex: none; }
+  .store-opt.on .radio { border-color: var(--red); background: radial-gradient(circle, var(--red) 0 3.5px, #fff 4px); }
+  .store-opt .info { flex: 1; min-width: 0; }
+  .store-opt .sn { font-size: 14px; }
+  .store-opt .sa { font-size: 12px; color: var(--faint); margin-top: 1px; }
+  .store-opt .sd { font-size: 12.5px; color: var(--muted); flex: none; font-variant-numeric: tabular-nums; }
 
   .store { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
   .store b { font-size: 17px; font-weight: 600; }
@@ -102,13 +113,14 @@
   .orderbar { margin-top: 13px; padding-top: 12px; border-top: 1px solid var(--line); display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
   .confirm { margin-top: 13px; border: 1px solid #f0c9c5; background: #fffdfd; border-radius: 10px; padding: 14px 15px; }
   .confirm .warn { color: #a3231a; font-size: 13px; margin: 0 0 10px; }
-  .confirm .kv { display: flex; justify-content: space-between; font-size: 13px; padding: 3px 0; color: var(--muted); }
-  .confirm .kv b { color: var(--ink); font-weight: 500; }
+  .kv { display: flex; justify-content: space-between; gap: 12px; font-size: 13px; padding: 3px 0; color: var(--muted); }
+  .kv b { color: var(--ink); font-weight: 500; white-space: nowrap; }
   .confirm select { height: 34px; border: 1px solid var(--line); border-radius: 8px; font: inherit; font-size: 13px; padding: 0 8px; background: #fff; }
   .okbox { margin-top: 13px; border: 1px solid #cfe7db; background: #f4faf7; border-radius: 10px; padding: 14px 15px; }
   .okbox .no { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 12px; color: var(--muted); word-break: break-all; }
   .okbox a.pay { display: inline-block; margin-top: 10px; background: var(--red); color: #fff; text-decoration: none; padding: 9px 15px; border-radius: 9px; font-size: 13.5px; font-weight: 500; }
   .okbox a.pay:hover { background: #c02419; }
+
   .foot { margin-top: 24px; padding-top: 15px; border-top: 1px solid var(--line); font-size: 12px; color: var(--faint); }
   .err { color: #a3231a; background: #fdf1f0; border: 1px solid #f5d4d0; border-radius: 10px; padding: 12px 14px; font-size: 13px; }
   .spin { display: inline-block; width: 13px; height: 13px; border: 2px solid #fff6; border-top-color: #fff; border-radius: 50%; animation: sp .7s linear infinite; vertical-align: -2px; margin-right: 7px; }
@@ -122,19 +134,31 @@
 
   <h1>麦门省钱助手</h1>
   <p class="lede">不是帮你点餐，是<b>帮你把账户里已经付过钱的东西用掉</b>。</p>
-  <p class="lede" style="margin-top:4px">券、积分、优惠，先盘点清楚，再决定今天这顿怎么点。</p>
+  <p class="lede" style="margin-top:4px">先定门店（券按门店生效），再看手里有什么券，最后才谈吃什么。</p>
   <div class="badge">WorkBuddy × 麦当劳 MCP</div>
 
   <section class="card">
-    <div class="card-h">
-      <h2><span class="step">1</span>你的券资产</h2>
-      <button class="reload" id="reloadWallet">刷新</button>
+    <div class="card-h"><h2><span class="step">1</span>你在哪吃</h2><button class="reload" id="reloadStores">重新查</button></div>
+    <div class="field">
+      <label>城市 / 商圈</label>
+      <input type="text" id="city" value="武汉" style="width:88px" />
+      <input type="text" id="keyword" value="光谷" style="width:150px" />
+      <button class="btn" id="doSearch">查门店</button>
+      <span class="tiny">商圈名比门店全名好使</span>
     </div>
-    <div id="wallet"><div class="skel">正在查你的账户…</div></div>
+    <div id="stores"><div class="skel">正在查附近门店…</div></div>
   </section>
 
-  <section class="card">
-    <div class="card-h"><h2><span class="step">2</span>今天这顿怎么点</h2></div>
+  <section class="card dim" id="walletCard">
+    <div class="card-h">
+      <h2><span class="step">2</span>你手里有什么</h2>
+      <button class="reload" id="reloadWallet">刷新</button>
+    </div>
+    <div id="wallet"><div class="skel">先选一家门店</div></div>
+  </section>
+
+  <section class="card dim" id="formCard">
+    <div class="card-h"><h2><span class="step">3</span>这顿怎么点</h2></div>
     <div class="field">
       <label>几个人</label>
       <div class="stepper"><button type="button" id="minus">−</button><span id="people">2</span><button type="button" id="plus">+</button></div>
@@ -148,12 +172,6 @@
     <div class="field">
       <label>不吃什么</label>
       <div class="chips" id="chips"></div>
-    </div>
-    <div class="field">
-      <label>去哪家</label>
-      <input type="text" id="city" value="武汉" style="width:88px" />
-      <input type="text" id="keyword" value="光谷" style="width:140px" />
-      <span class="tiny">商圈名比门店全名好使</span>
     </div>
     <div class="field">
       <label>加分项</label>
@@ -171,9 +189,17 @@
 <script>
 const AVOID = ['辣', '牛肉', '鸡肉', '猪肉', '鱼', '咖啡', '冰'];
 let people = 2;
+let selectedStore = null;
+let current = null;
 const avoidSet = new Set();
 const $ = (id) => document.getElementById(id);
 const yuan = (fen) => (Number(fen) / 100).toFixed(2);
+const post = async (path, body) => {
+  const r = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body || {}) });
+  const d = await r.json();
+  if (d.error) throw new Error(d.error);
+  return d;
+};
 
 $('chips').innerHTML = AVOID.map((a) => `<span class="chip" data-k="${a}">${a}</span>`).join('');
 $('chips').onclick = (e) => {
@@ -185,26 +211,73 @@ $('chips').onclick = (e) => {
 $('minus').onclick = () => { people = Math.max(1, people - 1); $('people').textContent = people; };
 $('plus').onclick = () => { people = Math.min(20, people + 1); $('people').textContent = people; };
 
-/* ---------- 券资产 ---------- */
+/* ---------- 第 1 步：门店 ---------- */
+async function searchStores() {
+  $('stores').innerHTML = '<div class="skel">正在查附近门店…</div>';
+  try {
+    const d = await post('/api/stores', { city: $('city').value.trim(), keyword: $('keyword').value.trim() });
+    if (!d.stores.length) {
+      $('stores').innerHTML = '<div class="err">这个商圈没查到门店，换个关键词试试（比如「街道口」「江汉路」）。</div>';
+      return;
+    }
+    $('stores').innerHTML = `
+      <div class="stores">${d.stores.map((s, i) => `
+        <div class="store-opt" data-i="${i}">
+          <span class="radio"></span>
+          <span class="info">
+            <div class="sn">${s.storeName}</div>
+            <div class="sa">${s.address || ''}${s.hours ? ' · ' + s.hours : ''}${s.businessStatus === false ? ' · 当前非营业' : ''}</div>
+          </span>
+          <span class="sd">${s.distance != null ? s.distance + 'm' : ''}</span>
+        </div>`).join('')}</div>
+      ${d.usedFavorites ? '<div class="tiny" style="margin-top:8px">按商圈没找到，以下是你的收藏门店</div>' : ''}
+      <div class="tiny" style="margin-top:10px">共 ${d.stores.length} 家，选一家开始（券按门店生效，换店券会变）</div>`;
+
+    $('stores').querySelectorAll('.store-opt').forEach((el) => {
+      el.onclick = () => selectStore(d.stores[Number(el.dataset.i)], el);
+    });
+    // 默认选最近的一家，省一次点击
+    selectStore(d.stores[0], $('stores').querySelector('.store-opt'));
+  } catch (e) {
+    $('stores').innerHTML = `<div class="err">查不到门店：${e.message}</div>`;
+  }
+}
+
+function selectStore(store, el) {
+  selectedStore = store;
+  $('stores').querySelectorAll('.store-opt').forEach((n) => n.classList.remove('on'));
+  if (el) el.classList.add('on');
+  $('walletCard').classList.remove('dim');
+  $('formCard').classList.remove('dim');
+  $('result').innerHTML = '';
+  loadWallet();
+}
+
+$('doSearch').onclick = searchStores;
+$('reloadStores').onclick = searchStores;
+
+/* ---------- 第 2 步：券资产 ---------- */
 async function loadWallet() {
+  if (!selectedStore) return;
   $('wallet').innerHTML = '<div class="skel">正在查你的账户…</div>';
   try {
-    const r = await fetch('/api/wallet', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
-    const w = await r.json();
-    if (w.error) throw new Error(w.error);
+    const w = await post('/api/wallet', { storeCode: selectedStore.storeCode });
     renderWallet(w);
   } catch (e) {
     $('wallet').innerHTML = `<div class="err">查不到账户信息：${e.message}</div>`;
   }
 }
+$('reloadWallet').onclick = loadWallet;
 
 function renderWallet(w) {
   const acc = w.account || {};
   const mine = w.mine || [];
   const claimable = w.claimable || [];
+  const usable = w.storeCoupons || [];
+
   const html = `
     <div class="metrics">
-      <div class="m"><div class="k">手里有券</div><div class="v">${mine.length}<small>张</small></div></div>
+      <div class="m"><div class="k">这家店能用</div><div class="v">${usable.length}<small>张券</small></div></div>
       <div class="m"><div class="k">还能领</div><div class="v">${claimable.length}<small>张</small></div></div>
       <div class="m ${acc.expired > 0 ? 'warn' : ''}">
         <div class="k">积分已过期</div>
@@ -212,12 +285,9 @@ function renderWallet(w) {
       </div>
     </div>
 
-    ${mine.length ? `<div class="list">${mine.map((c) => `
-      <div class="item">
-        <span class="nm">${c.name}</span>
-        ${c.daysLeft != null ? `<span class="tg">${c.daysLeft} 天后过期</span>` : ''}
-        <span class="pr">${c.price != null ? '¥' + c.price.toFixed(2) : '—'}</span>
-      </div>`).join('')}</div>` : '<div class="meta">账户里还没有券。</div>'}
+    ${usable.length ? `<div class="list">${usable.map((c) => `
+      <div class="item"><span class="nm">${c.title}</span><span class="tg">本店可用</span></div>`).join('')}</div>`
+      : `<div class="meta">这家店暂时没有你能用的券${mine.length ? `（你账户里有 ${mine.length} 张，但都不适用于这家店）` : ''}。</div>`}
 
     ${claimable.length ? `
       <div class="claim">
@@ -230,7 +300,7 @@ function renderWallet(w) {
       </div>` : '<div class="meta" style="margin-top:12px">麦麦省的券都已经领完了。</div>'}
 
     ${acc.expiringThisMonth > 0 ? `<div class="meta">这个月还有 ${acc.expiringThisMonth} 积分要过期。</div>` : ''}
-    <div class="foot" style="border:0;padding:0;margin-top:12px">本次读取账户用了 ${w.calls || '—'} 次 MCP 调用</div>
+    <div class="foot" style="border:0;padding:0;margin-top:12px">读取账户 + 本店券用了 ${w.calls || '—'} 次 MCP 调用</div>
   `;
   $('wallet').innerHTML = html;
 
@@ -240,10 +310,8 @@ function renderWallet(w) {
     btn.disabled = true;
     btn.innerHTML = '<span class="spin"></span>领取中…';
     try {
-      const r = await fetch('/api/claim', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
-      const d = await r.json();
-      if (d.error) throw new Error(d.error);
-      renderWallet(d.wallet);
+      const d = await post('/api/claim', {});
+      renderWallet({ ...d.wallet, storeCoupons: usable, calls: d.calls });
       const tip = document.createElement('div');
       tip.className = 'meta';
       tip.style.color = '#0f7b4f';
@@ -257,28 +325,25 @@ function renderWallet(w) {
   };
 }
 
-/* ---------- 方案 ---------- */
+/* ---------- 第 3 步：方案 ---------- */
 $('go').onclick = async () => {
+  if (!selectedStore) return;
   const btn = $('go');
   btn.disabled = true;
-  btn.innerHTML = '<span class="spin"></span>正在查门店、菜单和你手里的券…';
+  btn.innerHTML = '<span class="spin"></span>正在查菜单和券，逐个算价…';
   $('result').innerHTML = '';
   try {
-    const r = await fetch('/api/plan', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        people,
-        budget: Number($('budget').value) || null,
-        budgetPerPerson: $('perPerson').checked,
-        avoid: [...avoidSet],
-        city: $('city').value.trim(),
-        keyword: $('keyword').value.trim(),
-        nutrition: $('nutri').checked,
-      }),
+    const d = await post('/api/plan', {
+      storeCode: selectedStore.storeCode,
+      storeName: selectedStore.storeName,
+      storeAddress: selectedStore.address,
+      storeDistance: selectedStore.distance,
+      people,
+      budget: Number($('budget').value) || null,
+      budgetPerPerson: $('perPerson').checked,
+      avoid: [...avoidSet],
+      nutrition: $('nutri').checked,
     });
-    const d = await r.json();
-    if (d.error) throw new Error(d.error);
     renderPlans(d);
   } catch (e) {
     $('result').innerHTML = `<section class="card"><div class="err">出错了：${e.message}</div></section>`;
@@ -335,7 +400,7 @@ function renderPlans(d) {
   const empty = d.plans.length ? '' : `<div class="err">预算内没有够吃的组合，放宽预算或去掉忌口试试。</div>`;
 
   $('result').innerHTML = head + `<section class="card">
-    <div class="card-h"><h2><span class="step">3</span>给你的方案</h2></div>
+    <div class="card-h"><h2><span class="step">4</span>给你的方案</h2></div>
     ${empty}${plans}${more}
     <div class="foot">本次真实调用麦当劳 MCP ${d.mcpCalls} 次 · 试了 ${d.candidatesTested} 种组合，${d.valid} 种有效</div>
   </section>`;
@@ -346,8 +411,6 @@ function renderPlans(d) {
 }
 
 /* ---------- 下单 ---------- */
-let current = null;
-
 function orderPayload(idx, takeWayCode) {
   const p = current.plans[idx];
   const orders = p.ordersDetail
@@ -382,10 +445,7 @@ function showConfirm(idx) {
     btn.disabled = true;
     btn.innerHTML = '<span class="spin"></span>下单中…';
     try {
-      const body = orderPayload(idx, $('way-' + idx).value);
-      const r = await fetch('/api/order', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-      const d = await r.json();
-      if (d.error) throw new Error(d.error);
+      const d = await post('/api/order', orderPayload(idx, $('way-' + idx).value));
       renderOrderResult(idx, d.orders);
     } catch (e) {
       btn.disabled = false;
@@ -416,9 +476,8 @@ function renderOrderResult(idx, orders) {
       b.disabled = true;
       b.textContent = '取消中…';
       try {
-        const r = await fetch('/api/cancel', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ orderIds: [b.dataset.cancel] }) });
-        const d = await r.json();
-        if (d.error || !d.results?.[0]?.ok) throw new Error(d.error || '未知原因');
+        const d = await post('/api/cancel', { orderIds: [b.dataset.cancel] });
+        if (!d.results?.[0]?.ok) throw new Error('未知原因');
         b.textContent = '已取消';
       } catch (e) {
         b.disabled = false;
@@ -433,9 +492,7 @@ function renderOrderResult(idx, orders) {
     all.disabled = true;
     all.textContent = '取消中…';
     try {
-      const r = await fetch('/api/cancel', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ orderIds: orders.map((o) => o.orderId) }) });
-      const d = await r.json();
-      if (d.error) throw new Error(d.error);
+      await post('/api/cancel', { orderIds: orders.map((o) => o.orderId) });
       all.textContent = '已全部取消';
       $('ord-' + idx).querySelectorAll('[data-cancel]').forEach((b) => { b.textContent = '已取消'; b.disabled = true; });
     } catch (e) {
@@ -445,12 +502,7 @@ function renderOrderResult(idx, orders) {
   };
 }
 
-loadWallet();
-
-// 演示用：加 ?demo=1 打开页面就自动算一次
-if (new URLSearchParams(location.search).get('demo')) {
-  setTimeout(() => $('go').click(), 600);
-}
+searchStores();
 </script>
 </body>
 </html>

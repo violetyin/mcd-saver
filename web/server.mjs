@@ -46,13 +46,53 @@ const server = http.createServer(async (req, res) => {
     res.end(JSON.stringify(obj));
   };
 
-  // 券资产盘点
+  // 查门店（第一步：先定在哪吃，券才有效）
+  if (url.pathname === '/api/stores' && req.method === 'POST') {
+    try {
+      const b = await readBody(req);
+      const client = makeClient();
+      await client.init();
+      const city = b.city || '武汉';
+      const keyword = b.keyword || '光谷';
+      const r = await client.call('query-nearby-stores', { beType: 1, searchType: 2, city, keyword });
+      let list = Array.isArray(r?.data) ? r.data : [];
+      let usedFavorites = false;
+      if (!list.length) {
+        const fav = await client.call('query-nearby-stores', { beType: 1, searchType: 1 });
+        list = Array.isArray(fav?.data) ? fav.data : [];
+        usedFavorites = list.length > 0;
+      }
+      json(200, {
+        stores: list.map((s) => ({
+          storeCode: String(s.storeCode),
+          storeName: s.storeName,
+          address: s.address,
+          distance: s.distance,
+          businessStatus: s.businessStatus,
+          hours: s.businessStartTime && s.businessEndTime ? `${s.businessStartTime}-${s.businessEndTime}` : null,
+        })),
+        usedFavorites,
+        calls: client.calls,
+      });
+    } catch (e) { json(500, { error: e.message }); }
+    return;
+  }
+
+  // 券资产盘点（带 storeCode 时附上该店可用券）
   if (url.pathname === '/api/wallet' && req.method === 'POST') {
     try {
+      const b = await readBody(req);
       const client = makeClient();
       await client.init();
       const w = await walletSnapshot(client);
-      json(200, { ...w, calls: client.calls });
+      let storeCoupons = [];
+      if (b.storeCode) {
+        try {
+          const cr = await client.call('query-store-coupons', { storeCode: String(b.storeCode), orderType: 1, beType: 1 });
+          storeCoupons = Array.isArray(cr?.data) ? cr.data : [];
+        } catch { /* 单店券失败不影响账户盘点 */ }
+      }
+      json(200, { ...w, storeCoupons, calls: client.calls });
     } catch (e) { json(500, { error: e.message }); }
     return;
   }
@@ -133,6 +173,9 @@ const server = http.createServer(async (req, res) => {
         city: b.city || undefined,
         keyword: b.keyword || undefined,
         storeCode: b.storeCode || undefined,
+        storeName: b.storeName || undefined,
+        storeAddress: b.storeAddress || undefined,
+        storeDistance: b.storeDistance ?? undefined,
         nutrition: !!b.nutrition,
       });
       json(200, result);

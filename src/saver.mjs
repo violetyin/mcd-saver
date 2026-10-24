@@ -211,7 +211,12 @@ export async function runSaver(opts) {
   // 1. 定门店（beType=1 到店自取：不传 beCode，传了会报错）
   let stores = [];
   if (opts.storeCode) {
-    stores = [{ storeCode: String(opts.storeCode), storeName: opts.storeName || `门店 ${opts.storeCode}` }];
+    stores = [{
+      storeCode: String(opts.storeCode),
+      storeName: opts.storeName || `门店 ${opts.storeCode}`,
+      address: opts.storeAddress || null,
+      distance: opts.storeDistance ?? null,
+    }];
   } else {
     const r = await client.call('query-nearby-stores', {
       beType: 1, searchType: 2, city: opts.city || env.MCD_CITY || '北京', keyword: opts.keyword || env.MCD_KEYWORD || '国贸',
